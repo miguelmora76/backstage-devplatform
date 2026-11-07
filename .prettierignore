@@ -1,0 +1,9 @@
+node_modules
+dist
+dist-types
+coverage
+yarn.lock
+.claude
+.git
+aidlc
+**/test-data/*.json

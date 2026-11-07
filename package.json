@@ -1,0 +1,46 @@
+{
+  "name": "backstage-devplatform",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  },
+  "scripts": {
+    "tsc": "tsc",
+    "tsc:full": "tsc --skipLibCheck false --incremental false",
+    "test": "backstage-cli repo test",
+    "lint": "backstage-cli repo lint",
+    "prettier:check": "prettier --check .",
+    "prettier:fix": "prettier --write ."
+  },
+  "devDependencies": {
+    "@backstage/cli": "^0.36.7",
+    "@backstage/cli-defaults": "^0.1.7",
+    "@jest/environment-jsdom-abstract": "^30.0.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.19.2",
+    "jest": "^30.5.2",
+    "jsdom": "^27.1.0",
+    "prettier": "^3.9.10",
+    "typescript": "~5.9.3"
+  },
+  "jest": {
+    "coverageThreshold": {
+      "global": {
+        "lines": 85
+      }
+    },
+    "coverageReporters": [
+      "text",
+      "text-summary",
+      "json-summary",
+      "lcov"
+    ]
+  },
+  "prettier": "@backstage/cli/config/prettier"
+}
