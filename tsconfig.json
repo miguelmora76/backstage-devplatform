@@ -1,0 +1,16 @@
+{
+  "extends": "@backstage/cli/config/tsconfig.json",
+  "include": ["packages/*/src", "packages/*/config.d.ts"],
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    "outDir": "dist-types",
+    "rootDir": ".",
+    "module": "node16",
+    "moduleResolution": "node16",
+    "types": ["node", "jest"],
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "incremental": false,
+    "skipLibCheck": true
+  }
+}

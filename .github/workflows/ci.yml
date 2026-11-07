@@ -1,0 +1,164 @@
+name: CI
+
+# Shared workflow. u1-data-and-server adds the eight stages below; u5-compose-and-ci
+# extends it with the compose run. Nothing is deployed or pushed from here, and
+# no secret is used: the default token only reads the code.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24'
+  PACKAGE: packages/guardrails-server
+
+jobs:
+  # Stage 1: Prettier check over all code (NFR6.1). Any difference fails.
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn prettier:check
+
+  # Stage 2: ESLint with Backstage's usual settings. Any error fails.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn --cwd ${{ env.PACKAGE }} backstage-cli package lint
+
+  # Stage 3: TypeScript compile without output. Any error fails.
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn tsc -p ${{ env.PACKAGE }}
+
+  # Stage 4: all unit tests (including the 200-call benchmark, the 10-call
+  # concurrency test, the log-line test and the settings tests) with the
+  # coverage report. A failing test, or line coverage below 85%, fails.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn --cwd ${{ env.PACKAGE }} backstage-cli package test --watchAll=false --coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: ${{ env.PACKAGE }}/coverage
+          if-no-files-found: ignore
+
+  # Stage 5: builds the default data set twice and compares byte for byte,
+  # then compares with the stored copy kept with the tests (NFR7.1).
+  repeatability:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn --cwd ${{ env.PACKAGE }} build
+      - name: Generate the default data set twice and compare
+        run: |
+          node ${{ env.PACKAGE }}/dist/generator/cli.js > first.json
+          node ${{ env.PACKAGE }}/dist/generator/cli.js > second.json
+          cmp first.json second.json
+          cmp first.json ${{ env.PACKAGE }}/test-data/default-data-set.json
+
+  # Stage 6: contract tests check the four tools against the C2 spec file.
+  # u2-plugin-backend runs the same spec check on its stand-in.
+  contract:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn --cwd ${{ env.PACKAGE }} backstage-cli package test --watchAll=false src/contract.test.ts
+
+  # Stages 7 and 8: build the image without pushing it, check it runs as a
+  # non-root user and exposes one port, then start it (read-only root file
+  # system, no published port), wait for the health route, call one tool and
+  # stop it. Not ready within 10 seconds, or a failed call, fails.
+  image:
+    needs: [repeatability, contract]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage 7 - build the image (not pushed)
+        run: docker build -f ${{ env.PACKAGE }}/Dockerfile -t guardrails-server:ci .
+      - name: Stage 7 - check non-root user and one exposed port
+        run: |
+          user=$(docker image inspect guardrails-server:ci --format '{{.Config.User}}')
+          echo "image user: ${user}"
+          test -n "${user}" && test "${user}" != "root" && test "${user}" != "0"
+          ports=$(docker image inspect guardrails-server:ci --format '{{len .Config.ExposedPorts}}')
+          echo "exposed ports: ${ports}"
+          test "${ports}" = "1"
+      - name: Stage 8 - container smoke test
+        run: |
+          docker run -d --name guardrails-smoke --read-only guardrails-server:ci
+          ready=0
+          for i in $(seq 1 10); do
+            if docker exec guardrails-smoke node packages/guardrails-server/dist/probe/healthcheck.js; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "${ready}" != "1" ]; then
+            docker logs guardrails-smoke
+            exit 1
+          fi
+          docker exec guardrails-smoke node packages/guardrails-server/dist/probe/smoke.js
+          docker logs guardrails-smoke
+          docker stop guardrails-smoke
+      - name: Stage 8 - container with the failure setting on fails the call
+        run: |
+          docker run -d --name guardrails-forced --read-only -e GUARDRAILS_FAILURE_MODE=on guardrails-server:ci
+          for i in $(seq 1 10); do
+            if docker exec guardrails-forced node packages/guardrails-server/dist/probe/healthcheck.js; then
+              break
+            fi
+            sleep 1
+          done
+          if docker exec guardrails-forced node packages/guardrails-server/dist/probe/smoke.js; then
+            echo "expected the call to fail with the failure setting on"
+            exit 1
+          fi
+          docker stop guardrails-forced
