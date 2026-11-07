@@ -1,0 +1,20 @@
+{
+  "stage": "domain-design",
+  "upstream_ids": ["US1.1","US1.2","US2.1","US2.2","US3.1","US3.2","US3.3","US4.1","US5.1","US5.2","US6.1","US6.2","US6.3","US6.4"],
+  "coverage": [
+    { "id": "US1.1", "status": "OK", "target": "GuardrailsPluginUI, ChangeWorkflow, GuardrailsServer, Dependency" },
+    { "id": "US1.2", "status": "OK", "target": "GuardrailsPluginUI, ChangeWorkflow, GuardrailsServer, CiRun" },
+    { "id": "US2.1", "status": "OK", "target": "GuardrailsPluginUI, ChangeWorkflow, Change" },
+    { "id": "US2.2", "status": "OK", "target": "GuardrailsPluginUI, ChangeWorkflow, Change" },
+    { "id": "US3.1", "status": "OK", "target": "GuardrailsPluginUI, ChangeWorkflow, Change" },
+    { "id": "US3.2", "status": "OK", "target": "ChangeWorkflow, DemoIdentity, AuditLog" },
+    { "id": "US3.3", "status": "OK", "target": "ChangeWorkflow, GuardrailsServer, Change" },
+    { "id": "US4.1", "status": "OK", "target": "AuditLog, GuardrailsPluginUI, AuditEntry" },
+    { "id": "US5.1", "status": "OK", "target": "DemoIdentity, GuardrailsPluginUI, DemoUser" },
+    { "id": "US5.2", "status": "OK", "target": "GuardrailsPluginUI, ChangeWorkflow" },
+    { "id": "US6.1", "status": "OK", "target": "GuardrailsServer, SeedDataGenerator, SeedDataSet" },
+    { "id": "US6.2", "status": "Deferred", "target": "units-generation" },
+    { "id": "US6.3", "status": "Deferred", "target": "units-generation" },
+    { "id": "US6.4", "status": "Deferred", "target": "units-generation" }
+  ]
+}

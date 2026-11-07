@@ -1,0 +1,1 @@
+"Build a Backstage plugin (frontend + backend) that surfaces the mcp-devplatform-guardrails tools — dependency-upgrade planning and CI failure triage — inside a service catalog page, with the existing approval-gated write flow and audit log visible in the UI. Sample project on synthetic data; local only (docker compose or minikube); CI via GitHub Actions."

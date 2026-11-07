@@ -1,0 +1,32 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "u1-data-and-server",
+  "upstream_ids": ["NFR1.1","NFR1.5","NFR7.7","NFR1.2","NFR1.3","NFR5.1","NFR5.7","NFR5.5","NFR5.3","NFR5.2","NFR5.4","NFR5.6","NFR1.4","NFR7.1","NFR7.2","NFR7.4","NFR7.5","NFR7.3","NFR7.6","NFR1.6","NFR1.7","NFR1.8","NFR2.1","NFR2.8","NFR6.1"],
+  "coverage": [
+    { "id": "NFR1.1", "status": "OK", "target": "One-core and 256 MB limits in the compose entry; 200-call benchmark in the test stage and again in the u5 container run (infrastructure-specification.md, cicd-pipeline.md)" },
+    { "id": "NFR1.2", "status": "OK", "target": "Compose health check with a 10 second start allowance; container smoke test stage (monitoring-design.md, cicd-pipeline.md)" },
+    { "id": "NFR1.3", "status": "N/A", "target": "in-process data generation; needs no infrastructure" },
+    { "id": "NFR1.4", "status": "N/A", "target": "single process event loop; needs no infrastructure" },
+    { "id": "NFR1.5", "status": "N/A", "target": "test-only size factor; needs no infrastructure" },
+    { "id": "NFR1.6", "status": "OK", "target": "Call lines on container standard output, read with the compose logs command (monitoring-design.md)" },
+    { "id": "NFR1.7", "status": "OK", "target": "Start line on container standard output (monitoring-design.md)" },
+    { "id": "NFR1.8", "status": "OK", "target": "Health route used by the compose health check; no other monitoring endpoint (monitoring-design.md)" },
+    { "id": "NFR2.1", "status": "OK", "target": "Small official Node.js image of the pinned long-term-support release (infrastructure-specification.md)" },
+    { "id": "NFR2.8", "status": "OK", "target": "Three environment variables passed by compose, no settings file (infrastructure-specification.md)" },
+    { "id": "NFR5.1", "status": "N/A", "target": "route allowlist is code; the only infrastructure aspect is the single exposed port, covered by NFR5.5" },
+    { "id": "NFR5.2", "status": "OK", "target": "Read-only root file system in the compose entry; log to standard output (infrastructure-specification.md)" },
+    { "id": "NFR5.3", "status": "N/A", "target": "input handling is code; needs no infrastructure" },
+    { "id": "NFR5.4", "status": "OK", "target": "No restart policy, so a stop caused by a bad setting stays visible (infrastructure-specification.md)" },
+    { "id": "NFR5.5", "status": "OK", "target": "No published port; the app reaches the server by service name on the compose network (infrastructure-specification.md)" },
+    { "id": "NFR5.6", "status": "OK", "target": "Non-root user in the final image stage; image build stage checks it (infrastructure-specification.md, cicd-pipeline.md)" },
+    { "id": "NFR5.7", "status": "OK", "target": "No secrets anywhere in the image, settings or pipeline (infrastructure-specification.md, cicd-pipeline.md)" },
+    { "id": "NFR6.1", "status": "OK", "target": "Format and lint stages in the pull request workflow (cicd-pipeline.md)" },
+    { "id": "NFR7.1", "status": "OK", "target": "Repeatability stage compares two builds and the stored copy on the CI runner (cicd-pipeline.md)" },
+    { "id": "NFR7.2", "status": "OK", "target": "The seed setting is optional in compose, so a plain start uses the fixed default seed (infrastructure-specification.md)" },
+    { "id": "NFR7.3", "status": "OK", "target": "No storage and no automatic restart; a manual restart gives the seeded state (infrastructure-specification.md)" },
+    { "id": "NFR7.4", "status": "OK", "target": "Failure mode is an environment variable of the compose entry, changed by restarting the container (infrastructure-specification.md)" },
+    { "id": "NFR7.5", "status": "N/A", "target": "safe repeated writes are code; needs no infrastructure" },
+    { "id": "NFR7.6", "status": "OK", "target": "Container exits non-zero on a bad setting and is not restarted (infrastructure-specification.md)" },
+    { "id": "NFR7.7", "status": "OK", "target": "Compose health check; the app waits for a healthy server (infrastructure-specification.md, monitoring-design.md)" }
+  ]
+}

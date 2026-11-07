@@ -1,0 +1,22 @@
+{
+  "stage": "code-generation",
+  "unit": "u1-data-and-server",
+  "version": 1,
+  "writes": [
+    { "path": ".gitignore" },
+    { "path": ".dockerignore" },
+    { "path": ".prettierignore" },
+    { "path": "package.json" },
+    { "path": "tsconfig.json" },
+    { "path": "yarn.lock" },
+    { "path": ".github/workflows/ci.yml" },
+    { "path": "packages/guardrails-server/package.json" },
+    { "path": "packages/guardrails-server/tsconfig.json" },
+    { "path": "packages/guardrails-server/tsconfig.build.json" },
+    { "path": "packages/guardrails-server/Dockerfile" },
+    { "path": "packages/guardrails-server/README.md" },
+    { "path": "packages/guardrails-server/contract/" },
+    { "path": "packages/guardrails-server/src/" },
+    { "path": "packages/guardrails-server/test-data/" }
+  ]
+}
