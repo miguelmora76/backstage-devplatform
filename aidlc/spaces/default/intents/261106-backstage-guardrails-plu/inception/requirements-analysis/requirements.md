@@ -11,16 +11,16 @@ Service owners and platform engineers should see dependency-upgrade planning and
 ### FR1: Dependency-upgrade planning view (scope S1)
 
 - FR1.1: The catalog page for a service shows its dependencies with the current version and the recommended version, taken from the guardrails server. Pass: for each seeded service, every seeded dependency appears with both versions.
-- FR1.2: Each row of the upgrade plan offers a "Propose change" action that creates a pending change for that upgrade (Q2). Proposing again while a pending change for the same dependency exists is allowed and creates a separate pending change (Q12). Pass: after the action, a pending change for that dependency appears in the pending list with the proposer recorded; after a second proposal, two pending changes for it are listed.
+- FR1.2: Each row of the upgrade plan offers a "Propose change" action that creates a pending change for that upgrade (Q2). Proposing again while a pending change for the same dependency exists is allowed and creates a separate pending change (Q12). Pass: after the action, a pending change for that dependency appears in the pending list with the proposer recorded and an audit entry with outcome proposed exists (P2); after a second proposal, two pending changes for it are listed. A dependency already at its recommended version cannot be proposed (the action is disabled and a direct call is refused with NOT_ELIGIBLE and writes nothing).
 
 ### FR2: CI failure triage view (scope S2)
 
 - FR2.1: The catalog page shows the service's failed CI runs with the identified cause for each, from the guardrails server. Pass: each seeded failed run appears with its cause.
-- FR2.2: Each failed run offers a "Propose re-run" action that creates a pending change to re-run that job (Q1: B). Proposing again for the same job while one is pending is allowed (Q12). Pass: after the action, a pending re-run change appears in the pending list with the proposer recorded; after a second proposal, two pending changes for that job are listed.
+- FR2.2: Each failed run offers a "Propose re-run" action that creates a pending change to re-run that job (Q1: B). Proposing again for the same job while one is pending is allowed (Q12). Pass: after the action, a pending re-run change appears in the pending list with the proposer recorded and an audit entry with outcome proposed exists (P2); after a second proposal, two pending changes for that job are listed. A run that is no longer failed cannot be proposed (refused with NOT_ELIGIBLE, nothing written).
 
 ### FR3: Approval-gated write flow (scope S3)
 
-- FR3.1: The page lists pending changes with what each will do, who proposed it, and its status. Pass: every pending change appears with these three items.
+- FR3.1: The page lists the open changes of the service (pending and failed, newest first, at most 200) with what each will do, who proposed it, and its status; the other statuses can be listed by a filter (updated in u2 Code Generation from the refined mockups, P4). Pass: every pending and failed change appears with these three items.
 - FR3.2: A detail screen per change shows what it will do and offers Approve and Reject, each with a reason input; a reason is required for both (Q10). Pass: both actions are available on a pending change and on no other; submitting either with an empty reason is refused with a message and writes nothing; a submitted reason appears unchanged in the audit entry (FR4.2).
 - FR3.3: A person cannot approve or reject a change they proposed; any other signed-in user can (Q3). The plugin backend enforces this, not only the UI (Q9). Pass: the proposer sees the actions disabled with a stated reason; a direct call to the plugin backend by the proposer to approve, reject or retry is refused with a message, the change is unchanged, and an audit entry with outcome refused is written (Q14); a different demo user can approve or reject.
 - FR3.4: On Approve, the change is applied through the guardrails server and its status becomes applied. Pass: the status is applied and an audit entry with outcome applied exists.
@@ -31,13 +31,17 @@ Service owners and platform engineers should see dependency-upgrade planning and
 ### FR4: Audit log (scope S4)
 
 - FR4.1: The audit log is append-only: entries cannot be edited or deleted through the plugin. Pass: no edit or delete action exists in the UI or the plugin's interface.
-- FR4.2: Every entry carries time, actor, action, target service, outcome (applied, rejected, failed or refused), and the approver's reason (Q5, Q10, Q11). Pass: all six fields are present on each entry; a refused attempt records the reason as submitted. A decision submitted with an empty reason is not recorded at all (see FR3.2).
-- FR4.3: The audit log is shown as a table filterable by time, actor, action and outcome (rough mockups Q4). Pass: applying each filter shows only matching entries.
+- FR4.2: Every entry carries time, actor, action, target service, outcome (proposed, applied, rejected, failed or refused), and the approver's reason (Q5, Q10, Q11; proposals are audited with outcome proposed and no reason, P2). Pass: all six fields are present on each entry; a refused attempt records the reason as submitted. A decision submitted with an empty reason is not recorded at all (see FR3.2). A reason is at most 2,000 characters; a longer one is refused with INVALID_INPUT and nothing is written.
+- FR4.3: The audit log of a service is shown as a table, newest first, filterable by time, actor, action and outcome and paged (default 20 entries, at most 100) (rough mockups Q4; P3; page defaults confirmed in u2 Functional Design). Pass: applying each filter shows only matching entries of that service.
 
 ### FR5: Identity
 
-- FR5.1: People sign in as one of several synthetic demo users (Q4). Pass: at least three demo users exist and the viewer can switch between them.
-- FR5.2: The signed-in demo user is recorded as the actor on every proposal, approval, rejection, retry and refused attempt. Pass: each audit entry names the demo user who acted.
+- FR5.1: People sign in as one of several synthetic demo users (Q4). Pass: at least three demo users exist (Sam, service owner; Priya, platform engineer; Alex, auditor) and the viewer can switch between them.
+- FR5.2: The signed-in demo user is recorded as the actor on every proposal, approval, rejection, retry and refused attempt. The actor and role come only from the sign-in identity, never from the request (P5). Pass: each audit entry names the demo user who acted; a request that carries another actor or role is served as the signed-in user; a request without a valid demo identity is refused with 401 and writes nothing.
+
+### FR12: Roles (proposed in the refined mockups, P1; added in u2 Code Generation)
+
+- FR12.1: The auditor role is read only. An auditor can open every view but cannot propose, approve, reject or retry; the plugin backend enforces this, not only the UI. Pass: the auditor sees the four actions disabled with a stated reason; a direct call by the auditor to propose, approve, reject or retry is refused with AUDITOR_READ_ONLY, the change is unchanged, and an audit entry with outcome refused is written.
 
 ### FR6: Synthetic guardrails server (scope S5)
 
@@ -64,7 +68,7 @@ Service owners and platform engineers should see dependency-upgrade planning and
 ### FR11: Empty and error states (Q16)
 
 - FR11.1: When a service has no dependencies, no failed CI runs, no pending changes or no audit entries, the matching view shows a message saying so instead of an empty area. Pass: for a service seeded with none of an item, the view shows that message.
-- FR11.2: When the guardrails server cannot be reached while a view loads, the view shows an error with a retry action, and all propose, approve, reject and retry actions are disabled. Pass: with the server stopped, each view shows the error and retry, no write action is enabled, and after the server restarts the retry action loads the data.
+- FR11.2: When the guardrails server cannot be reached while a view loads, the views that need it (the upgrade plan and the failed CI runs) show an error with a retry action, and all propose, approve, reject and retry actions are disabled, including reject, which needs no server call (amended in u2 Functional Design; the changes list and the audit log keep loading because they do not depend on the server). Pass: with the server stopped, the plan and failed-run views show the error and retry, no write action is enabled, a direct write call is refused with SERVER_UNREACHABLE and writes nothing, the changes list and the audit log still load, and after the server restarts the retry action loads the data.
 
 ## Non-Functional Requirements
 

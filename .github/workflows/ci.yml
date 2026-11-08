@@ -1,8 +1,11 @@
 name: CI
 
-# Shared workflow. u1-data-and-server adds the eight stages below; u5-compose-and-ci
-# extends it with the compose run. Nothing is deployed or pushed from here, and
-# no secret is used: the default token only reads the code.
+# Shared workflow. u1-data-and-server adds the eight stages below for the
+# guardrails server; u2-plugin-backend adds its own stages 4 to 8 (the jobs
+# named plugin-*) and its lint and type check steps; u5-compose-and-ci extends
+# it with the compose run. Nothing is deployed or pushed from here, and no
+# secret is used: the default token only reads the code. The PostgreSQL
+# password below is a throw-away value valid only inside the job.
 
 on:
   pull_request:
@@ -19,6 +22,8 @@ concurrency:
 env:
   NODE_VERSION: '24'
   PACKAGE: packages/guardrails-server
+  PLUGIN: packages/plugin-guardrails-backend
+  PLUGIN_NAME: plugin-guardrails-backend
 
 jobs:
   # Stage 1: Prettier check over all code (NFR6.1). Any difference fails.
@@ -44,6 +49,7 @@ jobs:
           cache: yarn
       - run: yarn install --frozen-lockfile
       - run: yarn --cwd ${{ env.PACKAGE }} backstage-cli package lint
+      - run: yarn --cwd ${{ env.PLUGIN }} backstage-cli package lint
 
   # Stage 3: TypeScript compile without output. Any error fails.
   typecheck:
@@ -56,6 +62,7 @@ jobs:
           cache: yarn
       - run: yarn install --frozen-lockfile
       - run: yarn tsc -p ${{ env.PACKAGE }}
+      - run: yarn tsc -p ${{ env.PLUGIN }}
 
   # Stage 4: all unit tests (including the 200-call benchmark, the 10-call
   # concurrency test, the log-line test and the settings tests) with the
@@ -162,3 +169,113 @@ jobs:
             exit 1
           fi
           docker stop guardrails-forced
+
+  # ---- u2-plugin-backend: stages 4 to 8 for plugin-guardrails-backend ----
+
+  # Stage 4 (plugin): unit tests that use the in-memory SQLite store. The
+  # PostgreSQL cases skip because no connection string is set. Any failing test
+  # fails.
+  plugin-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn workspace ${{ env.PLUGIN_NAME }} test --watchAll=false
+
+  # Stage 5 (plugin): the rule tests (claim, release, repair, append-only
+  # trigger, restart, concurrency) against the PostgreSQL service container.
+  # No Docker-in-Docker is needed. Any failing test fails.
+  plugin-rules:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      BACKSTAGE_TEST_DATABASE_POSTGRES16_CONNECTION_STRING: postgresql://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn workspace ${{ env.PLUGIN_NAME }} test --watchAll=false src/integration src/store src/database src/workflow
+
+  # Stage 6 (plugin): line coverage over the plugin code from the fast tests and
+  # the PostgreSQL rule tests together. Below 85% fails (the threshold is in the
+  # package settings and is never lowered).
+  plugin-coverage:
+    needs: [plugin-unit, plugin-rules]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      BACKSTAGE_TEST_DATABASE_POSTGRES16_CONNECTION_STRING: postgresql://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn workspace ${{ env.PLUGIN_NAME }} test --watchAll=false --coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: plugin-coverage
+          path: ${{ env.PLUGIN }}/coverage
+          if-no-files-found: ignore
+
+  # Stage 7 (plugin): contract check. The stand-in server and the client are
+  # compared with the C2 spec kept by u1; the route list and the code lists are
+  # compared with the C1 file. Any mismatch fails.
+  plugin-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn workspace ${{ env.PLUGIN_NAME }} contract:check
+
+  # Stage 8 (plugin): builds the plugin. The backend package that includes it
+  # belongs to u4-backstage-app; its build is added to this job when it exists.
+  plugin-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn workspace ${{ env.PLUGIN_NAME }} build

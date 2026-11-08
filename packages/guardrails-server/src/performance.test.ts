@@ -1,3 +1,5 @@
+import v8 from 'node:v8';
+import { runInNewContext } from 'node:vm';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { DEFAULT_SEED, generateDataSet } from './generator';
@@ -86,6 +88,10 @@ describe('performance (NFR1.1)', () => {
         );
         expect(value).toBeLessThanOrEqual(TARGET_MS);
       }
+      // Collect garbage left by earlier suites in the same test worker, so the
+      // figure is the live memory, not uncollected leftovers; the limit is unchanged.
+      v8.setFlagsFromString('--expose-gc');
+      runInNewContext('gc')();
       const heapMb = process.memoryUsage().heapUsed / (1024 * 1024);
       console.info(`BENCHMARK heap_used_mb=${heapMb.toFixed(1)}`);
       expect(heapMb).toBeLessThan(256);

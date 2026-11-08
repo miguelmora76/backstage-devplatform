@@ -1,0 +1,30 @@
+## Review
+
+**Verdict:** NOT-READY
+**Reviewer:** aidlc-architecture-reviewer-agent
+**Date:** 2026-11-07T19:45:36Z
+**Iteration:** 1
+**Verdict Dictated:** no
+
+### Findings
+
+| ID | Severity | Location | Finding | Required action | Status |
+|---|---|---|---|---|---|
+| R-01 | Major | aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u2-plugin-backend/functional-design/entities.md > Change attributes (claimedAt, lastAction, decidedBy); rules.md > BR7.3, BR7.5 | The claim stores only claimedAt. The decider, the claimed action, the reason and the previous status (pending or failed) are written only at step 3 of BR3.4. BR7.3 must release a stuck claim with "lastAction set to the action that was claimed" and append an audit entry, but AuditEntry.actor is required and nothing records who claimed or which action. After a retry claim, lastAction still holds the earlier action. BR7.5 needs the previous status to hide deciding, and that is not stored either. A released claim therefore cannot produce a valid audit entry. | Add claim attributes (claimedBy, claimedAction, claimedReason, previous status) written atomically by the claim. State which actor and reason the Interrupted entry carries. Say how BR7.5 derives the status it returns. | New |
+| R-02 | Major | rules.md > BR7.3, BR3.4 step 3, W3 step 7 in functional-spec.md | The release and the normal finish are not made conditional. Step 3 writes the final status without requiring that the change is still deciding with the same claim. A decision that is slow (for example a database stall after the 10 second write timeout) can finish after a read released the claim at 30 seconds. The late write would overwrite failed/Interrupted. decisionCount would be incremented twice and two decision entries would exist. Two concurrent reads can also both release the same claim. This is the "decision during a claim release" race, and it is unaddressed. | Require the release and the final write to be conditional updates on (status deciding, same claim time). The loser must change nothing and append nothing. Define which outcome stands when they collide. | New |
+| R-03 | Major | rules.md > BR7.4, BR3.4 step 4, entities.md > AuditEntry.decisionNumber | Recovery looks only at whether decisionCount exceeds the newest decision entry's decisionNumber, and the change record holds only the latest decision. (a) If decision 1 (a failed approve) is written but its audit append fails, a retry may run before any read repairs it. The retry appends entry 2, entry 1 can never be detected or rebuilt, and an entry is missed. (b) A read that rebuilds an entry while the original decision is between steps 3 and 4 appends a duplicate. Two concurrent reads can also both rebuild. Nothing forbids two entries with the same changeId and decisionNumber. | Make the append idempotent on (changeId, decisionNumber), for example by a uniqueness rule. Repair any gap before a claim is accepted, or record each decision's data so every missing number can be rebuilt. Say how a repair avoids racing a decision still in flight. | New |
+| R-04 | Minor | rules.md > BR2.1 violation text; BR7.4 | BR2.1 says a change without its audit entry "is repaired by recovery (BR7.4)". BR7.4 only rebuilds decision entries from decisionCount, so a lost proposal entry (outcome proposed, no decisionNumber) is never rebuilt. Refused entries have no recovery at all. | Either make the change creation and its proposed entry one all-or-nothing write, or extend recovery to cover proposed entries. Remove the claim of repair for the cases not covered. | New |
+| R-05 | Minor | rules.md > BR7.3, BR4.2; functional-spec.md > State Machine | A reject whose claim is released becomes failed/Interrupted with lastAction reject. It is then retryable, and a retry calls the apply tool. Someone rejected the change, and a retry would apply it. The text does not say what retry does after an interrupted reject. | Decide and state it: an interrupted reject is retried as a reject, or it is not retryable, or this is accepted and noted. | New |
+| R-06 | Minor | functional-spec.md > Changes to Contracts Raised Here; contract-summary.md C1 responses (409) | NOT_ELIGIBLE (409) is listed as additive. C1 describes 409 as "wrong state, an audit entry with outcome refused is written", while BR2.3 writes nothing. Adding IN_PROGRESS, ALREADY_CURRENT and NOT_ELIGIBLE to closed enums can break a strict consumer such as u3's stand-in. The precedence line in C1 omits IN_PROGRESS and ALREADY_CURRENT. | Record in the contract changes that NOT_ELIGIBLE writes nothing. State the precedence change. Confirm the stand-in tolerates unknown enum values, or flag it for u3 to accept. | New |
+| R-07 | Minor | functional-spec.md > Assumptions (reject disabled in an outage); rules.md > BR6.2 | The reject is disabled in allowed actions during an outage, but no rule says whether a direct reject call is refused or accepted, since it needs no server. FR3.3 requires backend enforcement for other refusals. The rule set is silent for this case. | State whether a direct reject during an outage is refused (with SERVER_UNREACHABLE) or allowed, and which audit entry results. | New |
+
+### Validation Tool Results
+
+| Tool | Result | Interpretation |
+|---|---|---|
+| traceability.json cross-check (manual) | The OK targets BR1.1–BR8.1 all exist in rules.md. The N/A reasons are valid. No orphan rules. | The traceability rows are sound. |
+| Check order (manual) | Identity, not found, empty reason, auditor, proposer, then claim and state is consistent with FR3.2, FR3.3, FR3.7, AC3.1.4, AC3.3.4 and AC5.2.2. | No finding. |
+
+### Summary
+
+The check order, the allowed-action reasons and the stated reject deviation are consistent with the approved requirements. The claim, release and recovery design is not implementable as written. The claim does not record the data a release needs, the release and the final write are unguarded against each other, and recovery can miss or duplicate audit entries.

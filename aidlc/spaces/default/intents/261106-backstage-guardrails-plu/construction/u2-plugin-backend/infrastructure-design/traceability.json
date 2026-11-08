@@ -1,0 +1,32 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "u2-plugin-backend",
+  "upstream_ids": ["NFR1.7","NFR5.1","NFR5.10","NFR2.3","NFR2.6","NFR2.10","NFR1.1","NFR1.8","NFR5.2","NFR5.3","NFR5.4","NFR5.5","NFR5.6","NFR5.7","NFR5.8","NFR5.9","NFR2.1","NFR2.12","NFR1.2","NFR2.9","NFR1.4","NFR2.5","NFR1.3","NFR2.7","NFR1.6"],
+  "coverage": [
+    { "id": "NFR1.1", "status": "OK", "target": "Read-time test in the PostgreSQL test stage with the seeded set (cicd-pipeline.md)" },
+    { "id": "NFR1.2", "status": "OK", "target": "Decision-time test in the PostgreSQL test stage with a 200 ms stand-in server (cicd-pipeline.md)" },
+    { "id": "NFR1.3", "status": "N/A", "target": "stand-in server delay and probe cache are test settings; needs no infrastructure" },
+    { "id": "NFR1.4", "status": "OK", "target": "100,000 audit entries loaded into the PostgreSQL service container in CI (cicd-pipeline.md)" },
+    { "id": "NFR1.6", "status": "OK", "target": "Memory measured in the concurrency test; no container limit set by this unit (cicd-pipeline.md)" },
+    { "id": "NFR1.7", "status": "OK", "target": "Concurrency test with ten simultaneous decisions on PostgreSQL (cicd-pipeline.md)" },
+    { "id": "NFR1.8", "status": "OK", "target": "Release test on PostgreSQL with a controlled clock (cicd-pipeline.md)" },
+    { "id": "NFR2.1", "status": "OK", "target": "Node.js release pinned in the lock file and the workflow (cicd-pipeline.md)" },
+    { "id": "NFR2.3", "status": "OK", "target": "PostgreSQL compose service with named volume, throw-away test service, CI service container (cicd-pipeline.md)" },
+    { "id": "NFR2.5", "status": "OK", "target": "Contract check stage against the C2 spec (cicd-pipeline.md)" },
+    { "id": "NFR2.6", "status": "OK", "target": "Demo sign-in off in shipped config, on in the compose override; dependency for u4 and u5 (cicd-pipeline.md)" },
+    { "id": "NFR2.7", "status": "OK", "target": "Server address, timeouts and database login supplied by compose as settings (cicd-pipeline.md)" },
+    { "id": "NFR2.9", "status": "OK", "target": "Rule tests on a real PostgreSQL in CI and a local test compose service (cicd-pipeline.md)" },
+    { "id": "NFR2.10", "status": "OK", "target": "Request log line on standard output, read with the compose logs command; no other monitoring (cicd-pipeline.md)" },
+    { "id": "NFR2.12", "status": "OK", "target": "Built into the Backstage backend image owned by u4 and u5; package build stage (cicd-pipeline.md)" },
+    { "id": "NFR5.1", "status": "N/A", "target": "identity guard is code; needs no infrastructure" },
+    { "id": "NFR5.2", "status": "N/A", "target": "identity guard is code; needs no infrastructure" },
+    { "id": "NFR5.3", "status": "OK", "target": "Shipped default off, compose override on, start-up warning (cicd-pipeline.md)" },
+    { "id": "NFR5.4", "status": "N/A", "target": "allowed-action rules are code; needs no infrastructure" },
+    { "id": "NFR5.5", "status": "OK", "target": "Audit table trigger created by a migration, tested in the PostgreSQL test stage (cicd-pipeline.md)" },
+    { "id": "NFR5.6", "status": "N/A", "target": "input check is code; needs no infrastructure" },
+    { "id": "NFR5.7", "status": "OK", "target": "Hostile-text test on PostgreSQL (cicd-pipeline.md)" },
+    { "id": "NFR5.8", "status": "OK", "target": "Database password only as a compose environment variable; none in code, image or workflow (cicd-pipeline.md)" },
+    { "id": "NFR5.9", "status": "OK", "target": "Forced failure after the claim with a controlled clock in the PostgreSQL test stage (cicd-pipeline.md)" },
+    { "id": "NFR5.10", "status": "OK", "target": "Named volume for PostgreSQL in compose; restart test in the PostgreSQL test stage (cicd-pipeline.md)" }
+  ]
+}

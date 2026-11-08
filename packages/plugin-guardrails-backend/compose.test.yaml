@@ -1,0 +1,26 @@
+# Throw-away PostgreSQL for the rule tests of plugin-guardrails-backend (NFR2.9).
+# The password below is a sample value valid only for this local test database.
+#
+# Start:  docker compose -f packages/plugin-guardrails-backend/compose.test.yaml up -d --wait
+# Test:   BACKSTAGE_TEST_DATABASE_POSTGRES16_CONNECTION_STRING=postgresql://postgres:postgres@localhost:55432/postgres \
+#           yarn workspace plugin-guardrails-backend test --watchAll=false
+# Remove: docker compose -f packages/plugin-guardrails-backend/compose.test.yaml down -v
+name: guardrails-backend-test
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - '55432:5432'
+    # Test data only: keep the data in memory and skip durability for speed.
+    tmpfs:
+      - /var/lib/postgresql/data
+    command: ['postgres', '-c', 'fsync=off', '-c', 'max_connections=200']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 2s
+      timeout: 3s
+      retries: 30

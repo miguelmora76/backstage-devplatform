@@ -41,6 +41,8 @@ Personas are defined in `personas.md`. Requirement IDs (FR, NFR) are defined in 
 - **Acceptance criteria:**
   - AC2.1.1: Given a row of the upgrade plan, when Sam chooses "Propose change", then a pending change for that dependency appears in the pending list with Sam recorded as proposer.
   - AC2.1.2: Given a pending change already exists for the same dependency, when Sam proposes it again, then a second pending change is created and both are listed.
+  - AC2.1.3: Given a proposal was made, when the audit log is read, then an entry with outcome proposed, Sam as actor and no reason exists (P2).
+  - AC2.1.4: Given a dependency already at its recommended version, when it is proposed by a direct call, then the call is refused with NOT_ELIGIBLE and nothing is written; given Alex (auditor), the call is refused with AUDITOR_READ_ONLY and an audit entry with outcome refused is written.
 
 ### US2.2: Propose a CI re-run
 
@@ -52,6 +54,7 @@ Personas are defined in `personas.md`. Requirement IDs (FR, NFR) are defined in 
 - **Acceptance criteria:**
   - AC2.2.1: Given a failed run, when Sam chooses "Propose re-run", then a pending re-run change appears in the pending list with Sam recorded as proposer.
   - AC2.2.2: Given a pending re-run exists for the same job, when Sam proposes it again, then a second pending change is created and both are listed.
+  - AC2.2.3: Given a re-run was proposed, when the audit log is read, then an entry with outcome proposed exists; given a run that is no longer failed, a direct proposal is refused with NOT_ELIGIBLE and nothing is written.
 
 ## Group 3: Decide
 
@@ -63,7 +66,7 @@ Personas are defined in `personas.md`. Requirement IDs (FR, NFR) are defined in 
 - **Requirements:** FR3.1, FR3.2, FR3.4, FR3.5, NFR3
 - **INVEST:** Depends on US2.1 or US2.2 for a change to decide; testable.
 - **Acceptance criteria:**
-  - AC3.1.1: Given pending changes, when Priya opens the list, then each shows what it will do, who proposed it and its status.
+  - AC3.1.1: Given pending or failed changes, when Priya opens the list, then the open changes (pending and failed, newest first, at most 200) each show what it will do, who proposed it and its status (P4).
   - AC3.1.2: Given a pending change proposed by Sam, when Priya approves it with a reason, then it is applied through the guardrails server, its status becomes applied, and an audit entry with outcome applied and her reason exists.
   - AC3.1.3: Given a pending change proposed by Sam, when Priya rejects it with a reason, then nothing is written to the guardrails server, its status becomes rejected, and an audit entry with outcome rejected exists.
   - AC3.1.4: Given the detail screen, when Priya submits Approve or Reject with an empty reason, then it is refused with a message and nothing is written.
@@ -80,6 +83,8 @@ Personas are defined in `personas.md`. Requirement IDs (FR, NFR) are defined in 
   - AC3.2.1: Given a change Sam proposed, when Sam views it, then Approve and Reject are disabled with a stated reason.
   - AC3.2.2: Given a change Sam proposed, when Sam calls the plugin backend directly to approve, reject or retry, then the call is refused, the change is unchanged, and an audit entry with outcome refused is written.
   - AC3.2.3: Given a change already approved by Priya, when a second demo user tries to approve or reject it, then the attempt is refused with a message and an audit entry with outcome refused exists for it.
+  - AC3.2.4: Given Alex (auditor), when Alex views a change or calls the plugin backend directly to approve, reject or retry, then the actions are disabled with a stated reason or the call is refused with AUDITOR_READ_ONLY, the change is unchanged, and an audit entry with outcome refused and the reason as submitted is written (FR12.1, P1).
+  - AC3.2.5: Given a decision whose reason is empty, or longer than 2,000 characters, when it is submitted, then it is refused (EMPTY_REASON or INVALID_INPUT) and nothing is written, for every user.
 
 ### US3.3: Retry a failed change
 
@@ -108,6 +113,7 @@ Personas are defined in `personas.md`. Requirement IDs (FR, NFR) are defined in 
   - AC4.1.2: Given the table, when Alex filters by time, actor, action or outcome, then only matching entries show.
   - AC4.1.3: Given the plugin's interface, when Alex looks for ways to edit or delete an entry, then none exist.
   - AC4.1.4: Given no entries yet, when Alex opens the log, then it shows a message saying so.
+  - AC4.1.6: Given a service, when the log is read, then only that service's entries show, newest first, in pages of 20 by default and at most 100, and proposals appear with outcome proposed (P2, P3).
   - AC4.1.5: Given the log, when it is loaded 20 times in a row, then the 95th percentile is at most 5 seconds and an automated accessibility scan reports no AA violations.
 
 ## Group 5: Identity and resilience
@@ -120,7 +126,8 @@ Personas are defined in `personas.md`. Requirement IDs (FR, NFR) are defined in 
 - **Requirements:** FR5.1, FR5.2
 - **INVEST:** Independent; testable.
 - **Acceptance criteria:**
-  - AC5.1.1: Given the running sample, when a viewer opens it, then at least three demo users are available and the viewer can switch between them.
+  - AC5.1.1: Given the running sample, when a viewer opens it, then at least three demo users are available (Sam, service owner; Priya, platform engineer; Alex, auditor) and the viewer can switch between them.
+  - AC5.1.3: Given a request that carries another actor or role, or no valid demo identity, when it reaches the plugin backend, then it is served as the signed-in user, or refused with 401 and nothing written (P5).
   - AC5.1.2: Given a demo user acts (propose, approve, reject, retry or a refused attempt), when the audit log is read, then the entry names that demo user as actor.
 
 ### US5.2: Cope with an unreachable guardrails server
@@ -132,7 +139,8 @@ Personas are defined in `personas.md`. Requirement IDs (FR, NFR) are defined in 
 - **INVEST:** Independent; testable by stopping the server.
 - **Acceptance criteria:**
   - AC5.2.1: Given the guardrails server is stopped, when any view loads, then it shows an error with a retry action.
-  - AC5.2.2: Given the same state, when Sam looks at propose, approve, reject and retry actions, then all are disabled.
+  - AC5.2.2: Given the same state, when Sam looks at propose, approve, reject and retry actions, then all are disabled (including reject), and a direct write call is refused with SERVER_UNREACHABLE and writes nothing.
+  - AC5.2.4: Given the same state, when Sam opens the changes list or the audit log, then they still load, because they do not depend on the server (FR11.2 as amended).
   - AC5.2.3: Given the server restarts, when Sam uses retry, then the data loads.
 
 ## Group 6: Run and deliver
