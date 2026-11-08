@@ -6,6 +6,7 @@ import {
   CHANGES_TABLE,
   CHANGE_COLUMNS,
 } from './tables';
+import { expectDatabaseError } from '../testing/expectDatabaseError';
 import { createTestDatabases } from '../testing/testDatabases';
 
 const databases = createTestDatabases();
@@ -63,7 +64,7 @@ describe.each(databases.eachSupportedId())('migrations on %s', id => {
 
   it('keeps (change_id, decision_number) unique and allows entries without a decision number', async () => {
     await knex('audit_entries').insert(auditRow());
-    await expect(knex('audit_entries').insert(auditRow())).rejects.toThrow();
+    await expectDatabaseError(knex('audit_entries').insert(auditRow()));
     // refused entries have no decision number: several for one change are fine
     await knex('audit_entries').insert(
       auditRow({ outcome: 'refused', decision_number: null }),
@@ -77,16 +78,17 @@ describe.each(databases.eachSupportedId())('migrations on %s', id => {
 
   it('raises an error on update of an audit entry and leaves it unchanged', async () => {
     await knex('audit_entries').insert(auditRow());
-    await expect(
+    await expectDatabaseError(
       knex('audit_entries').update({ actor: 'priya' }),
-    ).rejects.toThrow(/append-only/);
+      /append-only/,
+    );
     const row = await knex('audit_entries').first();
     expect(row.actor).toBe('sam');
   });
 
   it('raises an error on delete of an audit entry and leaves it in place', async () => {
     await knex('audit_entries').insert(auditRow());
-    await expect(knex('audit_entries').delete()).rejects.toThrow(/append-only/);
+    await expectDatabaseError(knex('audit_entries').delete(), /append-only/);
     const [{ count }] = await knex('audit_entries').count({ count: '*' });
     expect(Number(count)).toBe(1);
   });
@@ -124,7 +126,8 @@ postgresOnly('PostgreSQL-only audit rules', () => {
     const knex = await databases.init('POSTGRES_16');
     await migrate(knex);
     await knex('audit_entries').insert(auditRow());
-    await expect(knex.raw('truncate table audit_entries')).rejects.toThrow(
+    await expectDatabaseError(
+      knex.raw('truncate table audit_entries'),
       /append-only/,
     );
     const [{ count }] = await knex('audit_entries').count({ count: '*' });

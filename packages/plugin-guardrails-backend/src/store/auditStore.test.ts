@@ -1,4 +1,5 @@
 import type { Knex } from 'knex';
+import { expectDatabaseError } from '../testing/expectDatabaseError';
 import { initMigrated, createTestDatabases } from '../testing/testDatabases';
 import { createAuditStore } from './auditStore';
 import type { AuditStore, NewAuditEntry } from './types';
@@ -171,10 +172,11 @@ describe.each(databases.eachSupportedId())('audit store on %s', id => {
     ).toEqual([]);
 
     await audit.append(entry());
-    await expect(
+    await expectDatabaseError(
       knex('audit_entries').update({ actor: 'priya' }),
-    ).rejects.toThrow(/append-only/);
-    await expect(knex('audit_entries').delete()).rejects.toThrow(/append-only/);
+      /append-only/,
+    );
+    await expectDatabaseError(knex('audit_entries').delete(), /append-only/);
     expect((await audit.read('orders', {})).items[0].actor).toBe('sam');
   });
 
