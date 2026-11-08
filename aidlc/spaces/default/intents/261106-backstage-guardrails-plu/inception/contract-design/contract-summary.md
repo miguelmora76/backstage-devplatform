@@ -17,7 +17,7 @@ The seed data set inside u1 (generator to server) is not a contract here: the de
 
 ## C1: Backend interface (u2 to u3)
 
-Base path `/api/guardrails`. The acting user and role come from the sign-in identity on every request and are never read from the body or the query (P5). Every list item carries `allowedActions` (the UI shows them and never decides a rule). The reason for a disabled action follows this precedence: `SERVER_UNREACHABLE`, then `AUDITOR_READ_ONLY`, then `PROPOSER_CANNOT_DECIDE`, then the state reasons `NOT_PENDING` and `NOT_FAILED`.
+Base path `/api/guardrails`. The acting user and role come from the sign-in identity on every request and are never read from the body or the query (P5). Every list item carries `allowedActions` (the UI shows them and never decides a rule). The reason for a disabled action follows this precedence: `SERVER_UNREACHABLE`, then `AUDITOR_READ_ONLY`, then `PROPOSER_CANNOT_DECIDE`, then `IN_PROGRESS`, then the state reasons `NOT_PENDING`, `NOT_FAILED` and `ALREADY_CURRENT` (changed in u2 Code Generation, see "Changes made in u2 Code Generation" below). The machine-readable copy of the C1 block below is `packages/plugin-guardrails-backend/contract/c1-openapi.yaml`, owned by u2 and checked against the plugin's route list in CI (pipeline stage 7); where the two differ, the file wins.
 
 When the guardrails server is down, only the plan and CI reads fail (`503`, code `SERVER_UNREACHABLE`). The changes and audit reads keep working, and every write action is listed as not allowed with the reason `SERVER_UNREACHABLE` (Q2: A).
 
@@ -30,6 +30,11 @@ info:
 servers:
   - url: /api/guardrails
 paths:
+  /demo-users:
+    get:
+      summary: The three demo users for the sign-in switch. Open (no sign-in) and registered only while guardrails.demoSignIn.enabled is true.
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: "#/components/schemas/DemoUser" } } } } } } }
   /me:
     get:
       summary: The signed-in demo user, for display only
@@ -154,7 +159,7 @@ components:
       properties:
         action: { $ref: "#/components/schemas/ActionName" }
         allowed: { type: boolean }
-        reason: { type: string, enum: [SERVER_UNREACHABLE, AUDITOR_READ_ONLY, PROPOSER_CANNOT_DECIDE, NOT_PENDING, NOT_FAILED], description: "Present when allowed is false." }
+        reason: { type: string, enum: [SERVER_UNREACHABLE, AUDITOR_READ_ONLY, PROPOSER_CANNOT_DECIDE, IN_PROGRESS, NOT_PENDING, NOT_FAILED, ALREADY_CURRENT], description: "Present when allowed is false." }
     PlanItem:
       type: object
       required: [dependencyKey, name, currentVersion, recommendedVersion, allowedActions]
@@ -210,7 +215,7 @@ components:
     DecisionRequest:
       type: object
       required: [reason]
-      properties: { reason: { type: string, minLength: 1, description: "Stored exactly as submitted in the audit entry." } }
+      properties: { reason: { type: string, minLength: 1, maxLength: 2000, description: "Stored exactly as submitted in the audit entry. Empty or whitespace is EMPTY_REASON; over 2,000 characters is INVALID_INPUT." } }
     AuditAction: { type: string, enum: [propose, approve, reject, retry] }
     Outcome: { type: string, enum: [proposed, applied, rejected, failed, refused] }
     AuditEntry:
@@ -242,7 +247,7 @@ components:
           type: object
           required: [code, message]
           properties:
-            code: { type: string, enum: [EMPTY_REASON, SELF_DECISION, AUDITOR_READ_ONLY, ALREADY_DECIDED, NOT_FAILED, SERVER_UNREACHABLE, NOT_FOUND] }
+            code: { type: string, enum: [INVALID_INPUT, EMPTY_REASON, UNAUTHENTICATED, AUDITOR_READ_ONLY, SELF_DECISION, NOT_FOUND, ALREADY_DECIDED, NOT_FAILED, NOT_ELIGIBLE, CLAIM_RELEASED, SERVER_UNREACHABLE, INTERNAL_ERROR] }
             message: { type: string }
 ```
 
@@ -251,6 +256,17 @@ Behavior the spec cannot show:
 - Decision order inside the backend is the one in `components.md`: atomic claim, then (for approve and retry) the guardrails server call, then the change record, then the audit entry. A server failure or timeout is not an HTTP error for the caller: the response is `200` with the change in status `failed`.
 - An empty or blank `reason` returns `400 EMPTY_REASON` and writes nothing (FR3.2). Every other refusal writes an audit entry with outcome `refused` and the reason as submitted.
 - Duplicate proposals for the same target are allowed and create separate pending changes (FR1.2, FR2.2).
+
+### Changes made in u2 Code Generation
+
+All are additive or clarifications, so u3's stand-in keeps working: a consumer that does not know a reason shows a disabled action with generic wording, and one that does not know a code treats the call as failed with generic wording. They are listed in `functional-spec.md` of u2 and are in `c1-openapi.yaml`.
+
+- **New error codes:** `INVALID_INPUT` (400; a value is missing, wrongly typed or out of range, or a reason is over 2,000 characters; the message names the field, never the value; nothing is written), `UNAUTHENTICATED` (401; no valid demo identity, including a service principal; nothing is written), `NOT_ELIGIBLE` (409; propose for a dependency already at its recommended version or a run that is no longer failed; nothing is written), `CLAIM_RELEASED` (409; the decision finished after its claim was released; nothing is appended because the release wrote its own entry), `INTERNAL_ERROR` (500; fixed message, no detail).
+- **Which 4xx writes an audit entry:** only the refusals of a signed-in demo user on an existing change or a propose by an auditor (`AUDITOR_READ_ONLY`, `SELF_DECISION`, `ALREADY_DECIDED`, `NOT_FAILED`). `NOT_FOUND`, `NOT_ELIGIBLE`, `EMPTY_REASON`, `INVALID_INPUT`, `UNAUTHENTICATED`, `SERVER_UNREACHABLE` and `CLAIM_RELEASED` write nothing. This corrects the earlier text that every 409 writes a refused entry.
+- **New allowed-action reasons:** `IN_PROGRESS` (the change is being decided; a change being decided is returned with its previous status, never `deciding`) and `ALREADY_CURRENT` (propose on a dependency at its recommended version). New precedence: `SERVER_UNREACHABLE`, `AUDITOR_READ_ONLY`, `PROPOSER_CANNOT_DECIDE`, `IN_PROGRESS`, then `NOT_PENDING`, `NOT_FAILED`, `ALREADY_CURRENT`.
+- **New route:** `GET /demo-users`, open (no sign-in) and registered only while `guardrails.demoSignIn.enabled` is true; it returns `{ items: [{ userId, name, role }] }` for the UI's switch.
+- **Clarifications:** approve or reject on any non-pending change is `ALREADY_DECIDED`; retry on a non-failed change is `NOT_FAILED` (finding R-04). All four write actions are listed as not allowed with `SERVER_UNREACHABLE` while the health probe fails, and a direct write call is refused with 503 before any claim; a server that answers but is forced to fail counts as reachable (finding R-01). The changes list holds at most 200 items; the audit page size is 1 to 100 (default 20) and a value outside the range, or a page below 1, is refused with 400, not clamped; `from` and `to` are inclusive and `actor` is a userId (finding R-07). A reason is at most 2,000 characters. An unknown field in a body is dropped, and an actor or role in a body, query or header is ignored.
+- **C3:** new setting `guardrails.demoSignIn.enabled` (boolean, default false; the plugin logs a warning at start-up when it is true; u4 keeps the shipped default off and u5 turns it on in the compose override). The `demo` sign-in provider is delivered as a backend module of the auth plugin, `authModuleDemoSignIn`, exported by `plugin-guardrails-backend`; u4 adds it with the plugin. Choosing a user is `GET /api/auth/demo/start?userId=<sam|priya|alex>`, which answers with the Backstage identity `user:default/<userId>`. The change and audit store uses Backstage's own database settings (PostgreSQL); u4 supplies the values and u5 runs the database service with a named volume (finding R-06).
 
 ## C2: Guardrails server tool interface (u1 to u2)
 
@@ -304,7 +320,8 @@ registration:
 settings:   # app-config keys read by u2; u4 supplies the values and may override them per environment
   guardrails.server.url:            { type: string,  required: true,  note: "no default in code; compose and minikube supply it" }
   guardrails.server.readTimeoutMs:  { type: integer, default: 3000 }
-  guardrails.server.writeTimeoutMs: { type: integer, default: 10000 }
+  guardrails.server.writeTimeoutMs: { type: integer, default: 10000, note: "must stay below the 30 second claim release" }
+  guardrails.demoSignIn.enabled:    { type: boolean, default: false, note: "turns on the demo sign-in provider and the open user list; off in the shipped config, on only in the compose override" }
 sign_in:
   provider_id: demo                        # custom Backstage sign-in provider owned by u2 (Q5: A)
   behavior: "signs the browser in as the chosen demo user without a password; the UI then reloads its data"

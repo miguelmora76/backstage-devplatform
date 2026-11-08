@@ -1,0 +1,19 @@
+{
+  "stage": "code-generation",
+  "unit": "u2-plugin-backend",
+  "version": 1,
+  "writes": [
+    { "path": "packages/plugin-guardrails-backend/src/" },
+    { "path": "packages/plugin-guardrails-backend/migrations/" },
+    { "path": "packages/plugin-guardrails-backend/contract/" },
+    { "path": "packages/plugin-guardrails-backend/package.json" },
+    { "path": "packages/plugin-guardrails-backend/tsconfig.json" },
+    { "path": "packages/plugin-guardrails-backend/tsconfig.build.json" },
+    { "path": "packages/plugin-guardrails-backend/.eslintrc.js" },
+    { "path": "packages/plugin-guardrails-backend/config.d.ts" },
+    { "path": "packages/plugin-guardrails-backend/README.md" },
+    { "path": "packages/plugin-guardrails-backend/compose.test.yaml" },
+    { "path": ".github/workflows/ci.yml" },
+    { "path": "yarn.lock" }
+  ]
+}

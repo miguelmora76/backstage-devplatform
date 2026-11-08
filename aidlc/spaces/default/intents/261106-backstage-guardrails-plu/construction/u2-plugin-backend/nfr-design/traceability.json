@@ -1,0 +1,18 @@
+{
+  "stage": "nfr-design",
+  "unit": "u2-plugin-backend",
+  "upstream_ids": ["NFR5.1","NFR5.2","NFR5.3","NFR5.4","NFR5.5","NFR5.6","NFR5.7","NFR5.8","NFR5.9","NFR5.10","NFR1.7"],
+  "coverage": [
+    { "id": "NFR5.1", "status": "OK", "target": "Identity guard builds the actor; request parser has no actor or role field (security-design.md)" },
+    { "id": "NFR5.2", "status": "OK", "target": "Demo user principals only, 401 otherwise; open user list exempt (Q1: A)" },
+    { "id": "NFR5.3", "status": "OK", "target": "Demo sign-in registered only when set, default off, start-up warning, u4 and u5 dependency" },
+    { "id": "NFR5.4", "status": "OK", "target": "One allowed-action rules function used by reads and writes" },
+    { "id": "NFR5.5", "status": "OK", "target": "Append and read only audit store interface; error-raising database trigger" },
+    { "id": "NFR5.6", "status": "OK", "target": "Schema input check before the workflow; 400 INVALID_INPUT; reason limit and page range refused, not clamped" },
+    { "id": "NFR5.7", "status": "OK", "target": "Query builder with bound values; fixed names from code lists" },
+    { "id": "NFR5.8", "status": "OK", "target": "Request logger receives no body, query values or settings" },
+    { "id": "NFR5.9", "status": "OK", "target": "Single error handler with fixed 500; lazy release and entry rebuild; test-controlled clock" },
+    { "id": "NFR5.10", "status": "OK", "target": "PostgreSQL through start-up migrations; in-memory store for tests only" },
+    { "id": "NFR1.7", "status": "OK", "target": "Single conditional claim and a claim-token-bound final write with the audit append in one transaction" }
+  ]
+}

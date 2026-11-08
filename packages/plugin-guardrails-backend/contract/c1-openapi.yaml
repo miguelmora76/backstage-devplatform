@@ -1,0 +1,620 @@
+openapi: 3.0.3
+info:
+  title: Guardrails plugin backend interface (contract C1)
+  description: >-
+    Owned by u2-plugin-backend and consumed by u3-plugin-ui. The acting user and
+    role come from the sign-in identity on every request and are never read from
+    the body, the query or a header. Consumers ignore unknown fields. There is no
+    version in the path. Every list item carries allowedActions: the UI shows
+    them and never decides a rule. The reason for a disabled action follows this
+    order: SERVER_UNREACHABLE, AUDITOR_READ_ONLY, PROPOSER_CANNOT_DECIDE,
+    IN_PROGRESS, then NOT_PENDING, NOT_FAILED and ALREADY_CURRENT. A consumer
+    that does not know a reason or a code shows a disabled action or a failed
+    call with generic wording. The route list and the code lists in this file are
+    checked against the plugin by the contract check (pipeline stage 7).
+  version: '1'
+servers:
+  - url: /api/guardrails
+paths:
+  /demo-users:
+    get:
+      summary: The three demo users for the sign-in switch. Open (no sign-in needed) and registered only while guardrails.demoSignIn.enabled is true.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoUserList'
+  /me:
+    get:
+      summary: The signed-in demo user, for display only
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoUser'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+  /services/{service}/plan:
+    get:
+      summary: Upgrade plan for a service (FR1.1)
+      parameters:
+        - $ref: '#/components/parameters/service'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServerUnreachable'
+  /services/{service}/ci-runs:
+    get:
+      summary: Failed CI runs with causes (FR2.1)
+      parameters:
+        - $ref: '#/components/parameters/service'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CiRunList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServerUnreachable'
+  /services/{service}/changes:
+    get:
+      summary: Changes of a service, newest first, at most 200. Open means pending plus failed (FR3.1).
+      parameters:
+        - $ref: '#/components/parameters/service'
+        - name: status
+          in: query
+          required: false
+          description: Default open.
+          schema:
+            type: string
+            enum: [open, pending, applied, rejected, failed]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeList'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+    post:
+      summary: Propose a change; writes an audit entry with outcome proposed (FR1.2, FR2.2)
+      parameters:
+        - $ref: '#/components/parameters/service'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposeRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Change'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Refused'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/NotEligible'
+        '503':
+          $ref: '#/components/responses/ServerUnreachable'
+  /changes/{changeId}:
+    get:
+      summary: One change, for the detail screen (FR3.2)
+      parameters:
+        - $ref: '#/components/parameters/changeId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Change'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /changes/{changeId}/approve:
+    post:
+      summary: Approve and apply through the guardrails server (FR3.4)
+      parameters:
+        - $ref: '#/components/parameters/changeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionRequest'
+      responses:
+        '200':
+          description: Decision made. The status is applied, or failed when the server failed or did not answer (FR3.6).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Change'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Refused'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/RefusedState'
+        '503':
+          $ref: '#/components/responses/ServerUnreachable'
+  /changes/{changeId}/reject:
+    post:
+      summary: Reject without calling the guardrails server (FR3.5)
+      parameters:
+        - $ref: '#/components/parameters/changeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionRequest'
+      responses:
+        '200':
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Change'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Refused'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/RefusedState'
+        '503':
+          $ref: '#/components/responses/ServerUnreachable'
+  /changes/{changeId}/retry:
+    post:
+      summary: Retry a failed change (FR3.6)
+      parameters:
+        - $ref: '#/components/parameters/changeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionRequest'
+      responses:
+        '200':
+          description: Applied, or failed again with another failed audit entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Change'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Refused'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/RefusedState'
+        '503':
+          $ref: '#/components/responses/ServerUnreachable'
+  /services/{service}/audit:
+    get:
+      summary: Audit entries of a service, newest first, filtered and paged (FR4.3). Read only; there is no write, edit or delete (FR4.1).
+      parameters:
+        - $ref: '#/components/parameters/service'
+        - name: from
+          in: query
+          required: false
+          description: Inclusive lower bound on the entry time.
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          description: Inclusive upper bound on the entry time.
+          schema:
+            type: string
+            format: date-time
+        - name: actor
+          in: query
+          required: false
+          description: A userId.
+          schema:
+            type: string
+        - name: action
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/AuditAction'
+        - name: outcome
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Outcome'
+        - name: page
+          in: query
+          required: false
+          description: 1 or more. A value outside the range is refused with 400, not clamped.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          description: 1 to 100. A value outside the range is refused with 400, not clamped.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: OK. An empty page when the service has no entries.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditPage'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+components:
+  parameters:
+    service:
+      name: service
+      in: path
+      required: true
+      schema:
+        type: string
+      description: serviceName
+    changeId:
+      name: changeId
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    InvalidInput:
+      description: A value is missing, has the wrong type or is outside its range, or a reason is longer than 2,000 characters. Code INVALID_INPUT. The message names the field, never the value. Nothing is written.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthenticated:
+      description: No sign-in, or an identity that is not one of the three demo users (including a service principal). Code UNAUTHENTICATED. Nothing is written, not even an audit entry.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerUnreachable:
+      description: The guardrails server cannot be used (no answer in time, a tool error on a read, or the health probe failing before a write). Code SERVER_UNREACHABLE. Nothing is written.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    EmptyReason:
+      description: The reason is empty or whitespace. Code EMPTY_REASON (400). Nothing is written, not even an audit entry (FR3.2).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Refused:
+      description: The signed-in user may not do this. The change is unchanged and an audit entry with outcome refused is written. Codes SELF_DECISION and AUDITOR_READ_ONLY (FR3.3).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RefusedState:
+      description: >-
+        The change is in the wrong state. Codes ALREADY_DECIDED (approve or
+        reject on a change that is not pending) and NOT_FAILED (retry on a change
+        that is not failed) write an audit entry with outcome refused. Code
+        CLAIM_RELEASED (the claim was released while the server call ran) writes
+        nothing: the release wrote its own entry.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotEligible:
+      description: The target does not need the change (a dependency already at its recommended version, or a run that is no longer failed). Code NOT_ELIGIBLE. Nothing is written.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Unknown service, dependency or change. Code NOT_FOUND. Nothing is written.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Role:
+      type: string
+      enum: [service-owner, platform-engineer, auditor]
+    DemoUser:
+      type: object
+      required: [userId, name, role]
+      properties:
+        userId:
+          type: string
+        name:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+    DemoUserList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DemoUser'
+    ActionName:
+      type: string
+      enum: [propose, approve, reject, retry]
+    AllowedAction:
+      type: object
+      required: [action, allowed]
+      properties:
+        action:
+          $ref: '#/components/schemas/ActionName'
+        allowed:
+          type: boolean
+        reason:
+          type: string
+          description: Present when allowed is false.
+          enum:
+            - SERVER_UNREACHABLE
+            - AUDITOR_READ_ONLY
+            - PROPOSER_CANNOT_DECIDE
+            - IN_PROGRESS
+            - NOT_PENDING
+            - NOT_FAILED
+            - ALREADY_CURRENT
+    PlanItem:
+      type: object
+      required:
+        [
+          dependencyKey,
+          name,
+          currentVersion,
+          recommendedVersion,
+          allowedActions,
+        ]
+      properties:
+        dependencyKey:
+          type: string
+        name:
+          type: string
+        currentVersion:
+          type: string
+        recommendedVersion:
+          type: string
+        allowedActions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AllowedAction'
+    PlanList:
+      type: object
+      required: [service, items]
+      properties:
+        service:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanItem'
+    CiRunItem:
+      type: object
+      required: [runKey, runNumber, status, cause, allowedActions]
+      properties:
+        runKey:
+          type: string
+        runNumber:
+          type: integer
+        status:
+          type: string
+        cause:
+          type: string
+        allowedActions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AllowedAction'
+    CiRunList:
+      type: object
+      required: [service, items]
+      properties:
+        service:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CiRunItem'
+    ChangeStatus:
+      type: string
+      enum: [pending, applied, rejected, failed]
+      description: deciding is internal and never returned. A change being decided shows its previous status with every decision action disabled with the reason IN_PROGRESS. A claim older than 30 seconds is released to failed with failureMessage Interrupted (a released reject goes back to pending).
+    Change:
+      type: object
+      required:
+        [
+          changeId,
+          kind,
+          service,
+          target,
+          proposedBy,
+          status,
+          proposedAt,
+          allowedActions,
+        ]
+      properties:
+        changeId:
+          type: string
+        kind:
+          type: string
+          enum: [upgrade, rerun]
+        service:
+          type: string
+        target:
+          type: string
+          description: dependencyKey for upgrade, runKey for rerun
+        summary:
+          type: string
+          description: What the change will do, in words. Written once at proposal.
+        proposedBy:
+          $ref: '#/components/schemas/DemoUser'
+        status:
+          $ref: '#/components/schemas/ChangeStatus'
+        decidedBy:
+          $ref: '#/components/schemas/DemoUser'
+        decisionReason:
+          type: string
+        failureMessage:
+          type: string
+        proposedAt:
+          type: string
+          format: date-time
+        decidedAt:
+          type: string
+          format: date-time
+        allowedActions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AllowedAction'
+    ChangeList:
+      type: object
+      required: [service, items]
+      properties:
+        service:
+          type: string
+        items:
+          type: array
+          maxItems: 200
+          items:
+            $ref: '#/components/schemas/Change'
+    ProposeRequest:
+      type: object
+      required: [kind, target]
+      properties:
+        kind:
+          type: string
+          enum: [upgrade, rerun]
+        target:
+          type: string
+          minLength: 1
+          maxLength: 200
+    DecisionRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          maxLength: 2000
+          description: Stored exactly as submitted. Empty or whitespace is refused with EMPTY_REASON; over 2,000 characters with INVALID_INPUT.
+    AuditAction:
+      type: string
+      enum: [propose, approve, reject, retry]
+    Outcome:
+      type: string
+      enum: [proposed, applied, rejected, failed, refused]
+    AuditEntry:
+      type: object
+      required: [entryId, time, actor, action, service, target, outcome]
+      properties:
+        entryId:
+          type: string
+        time:
+          type: string
+          format: date-time
+        actor:
+          $ref: '#/components/schemas/DemoUser'
+        action:
+          $ref: '#/components/schemas/AuditAction'
+        service:
+          type: string
+        target:
+          type: string
+        outcome:
+          $ref: '#/components/schemas/Outcome'
+        reason:
+          type: string
+          description: Absent for a proposal; the submitted reason otherwise.
+        changeId:
+          type: string
+          description: Absent for a refused proposal that created no change.
+    AuditPage:
+      type: object
+      required: [items, page, pageSize, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEntry'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                - INVALID_INPUT
+                - EMPTY_REASON
+                - UNAUTHENTICATED
+                - AUDITOR_READ_ONLY
+                - SELF_DECISION
+                - NOT_FOUND
+                - ALREADY_DECIDED
+                - NOT_FAILED
+                - NOT_ELIGIBLE
+                - CLAIM_RELEASED
+                - SERVER_UNREACHABLE
+                - INTERNAL_ERROR
+            message:
+              type: string
