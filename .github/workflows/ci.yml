@@ -26,6 +26,10 @@ env:
   PLUGIN_NAME: plugin-guardrails-backend
   UI: packages/plugin-guardrails
   UI_NAME: plugin-guardrails
+  APP: packages/app
+  APP_NAME: app
+  BACKEND: packages/backend
+  BACKEND_NAME: backend
 
 jobs:
   # Stage 1: Prettier check over all code (NFR6.1). Any difference fails.
@@ -55,6 +59,11 @@ jobs:
       # u3-plugin-ui: the same lint, plus its rules that forbid raw-HTML
       # insertion, fetch and storage outside the API and session, and ports.
       - run: yarn --cwd ${{ env.UI }} backstage-cli package lint
+      # u4-backstage-app: the same lint, plus its rules that forbid raw-HTML
+      # insertion, console output, storage, module-level state, and addresses
+      # or ports written in source.
+      - run: yarn --cwd ${{ env.APP }} backstage-cli package lint
+      - run: yarn --cwd ${{ env.BACKEND }} backstage-cli package lint
 
   # Stage 3: TypeScript compile without output. Any error fails.
   typecheck:
@@ -69,6 +78,8 @@ jobs:
       - run: yarn tsc -p ${{ env.PACKAGE }}
       - run: yarn tsc -p ${{ env.PLUGIN }}
       - run: yarn tsc -p ${{ env.UI }}
+      - run: yarn tsc -p ${{ env.BACKEND }}
+      - run: yarn tsc -p ${{ env.APP }}
 
   # Stage 4: all unit tests (including the 200-call benchmark, the 10-call
   # concurrency test, the log-line test and the settings tests) with the
@@ -373,3 +384,124 @@ jobs:
           path: ${{ env.UI }}/dist
       - run: node ${{ env.UI }}/scripts/check-packages.mjs
       - run: node ${{ env.UI }}/scripts/check-built.mjs
+
+  # ---- u4-backstage-app: jobs for the app (packages/app, packages/backend) ----
+
+  # One run of every unit test of both packages except the start-up test, with
+  # coverage (sign-in page, identity handling, catalog logic, settings check,
+  # lint-rule fixtures). The 85% line threshold is in each package's settings
+  # and is never lowered. Any failing test fails.
+  app-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      # The catalog tests use the generator (a development dependency, D10).
+      - run: yarn workspace guardrails-server build
+      - run: yarn workspace ${{ env.APP_NAME }} test --coverage
+      - run: yarn workspace ${{ env.BACKEND_NAME }} test --coverage --testPathIgnorePatterns startup
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: app-coverage
+          path: |
+            ${{ env.APP }}/coverage/coverage-summary.json
+            ${{ env.BACKEND }}/coverage/coverage-summary.json
+          if-no-files-found: ignore
+
+  # Reads the coverage reports that app-unit produced (it does not run the
+  # tests again) and fails below 85% line coverage in either package.
+  app-coverage:
+    needs: app-unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-coverage
+          path: app-coverage
+      - name: Check line coverage is at least 85%
+        run: |
+          for f in $(find app-coverage -name coverage-summary.json); do
+            node -e "
+              const s = require('./$f');
+              const pct = s.total.lines.pct;
+              console.log('$f line coverage: ' + pct + '%');
+              if (pct < 85) { console.error('below 85%'); process.exit(1); }
+            "
+          done
+
+  # The start-up test: the real feature list in Backstage's test backend with
+  # a stand-in guardrails server and a recording logger. No Docker. Any
+  # failing check fails.
+  app-startup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn workspace ${{ env.BACKEND_NAME }} test startup
+
+  # The committed catalog equals the script output for the default seed, and
+  # the script gives the same bytes on two runs (NFR7.1, NFR2.4).
+  app-catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn workspace guardrails-server build
+      - run: yarn workspace ${{ env.BACKEND_NAME }} catalog:check
+      - name: Write the catalog twice and compare byte for byte
+        run: |
+          yarn workspace ${{ env.BACKEND_NAME }} catalog:write --out catalog/first.yaml
+          yarn workspace ${{ env.BACKEND_NAME }} catalog:write --out catalog/second.yaml
+          cmp ${{ env.BACKEND }}/catalog/first.yaml ${{ env.BACKEND }}/catalog/second.yaml
+          cmp ${{ env.BACKEND }}/catalog/first.yaml ${{ env.BACKEND }}/catalog/guardrails-catalog.yaml
+
+  # The committed settings, the package allow-lists and the lint bans
+  # (NFR2.5, NFR5.4 to NFR5.6, NFR5.8). Any hit fails.
+  app-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn workspace ${{ env.BACKEND_NAME }} check:settings
+      - run: yarn workspace ${{ env.BACKEND_NAME }} check:packages
+      - run: yarn workspace ${{ env.APP_NAME }} check:packages
+
+  # Builds both packages and keeps the output for u5's image build. A last
+  # step starts the real backend entry point with GUARDRAILS_SERVER_URL unset
+  # and asserts a non-zero exit code and the message naming the setting
+  # (NFR7.2).
+  app-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn workspace ${{ env.APP_NAME }} build
+      - run: yarn workspace ${{ env.BACKEND_NAME }} build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-dist
+          path: |
+            ${{ env.APP }}/dist
+            ${{ env.BACKEND }}/dist
+      - run: yarn workspace ${{ env.BACKEND_NAME }} check:exit

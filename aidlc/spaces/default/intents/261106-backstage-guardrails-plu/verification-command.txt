@@ -1,1 +1,1 @@
-yarn tsc && yarn lint && yarn prettier:check && yarn test --watchAll=false --coverage
+yarn tsc && yarn lint && yarn prettier:check && yarn test --watchAll=false --coverage --testPathIgnorePatterns packages/guardrails-server/src/performance.test.ts && yarn workspace guardrails-server test --watchAll=false src/performance.test.ts

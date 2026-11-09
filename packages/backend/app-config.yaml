@@ -1,0 +1,58 @@
+# Shipped settings of the guardrails sample app (u4-backstage-app).
+#
+# Every value that differs between machines is filled from the environment
+# (see .env.example). Nothing secret and no guardrails server address is
+# written here. `${NAME:-default}` uses the default when NAME is not set;
+# `${NAME}` alone has no default.
+app:
+  title: Guardrails sample
+  baseUrl: ${APP_BASE_URL:-http://localhost:3000}
+
+backend:
+  baseUrl: ${BACKEND_BASE_URL:-http://localhost:7007}
+  listen: ${BACKEND_PORT:-7007}
+  # The backend accepts browser calls only from the app's own address (NFR5.6).
+  cors:
+    origin: ${APP_BASE_URL:-http://localhost:3000}
+    methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+    credentials: true
+  # Content policy: scripts, styles and connections only from the app and the
+  # backend's own addresses (security design S9). No wildcard host.
+  csp:
+    connect-src:
+      [
+        "'self'",
+        '${APP_BASE_URL:-http://localhost:3000}',
+        '${BACKEND_BASE_URL:-http://localhost:7007}',
+      ]
+    # 'unsafe-eval' is allowed for scripts only: Backstage's own pages need it
+    # (the entity page fails with an EvalError without it, seen in a real
+    # browser run). Recorded as a deviation from security design S9.
+    script-src: ["'self'", "'unsafe-eval'"]
+  # In-memory SQLite for plain local runs; app-config.postgres.yaml replaces it.
+  database:
+    client: better-sqlite3
+    connection: ':memory:'
+
+# The demo sign-in is the only way in (NFR5.1). The provider exists only while
+# guardrails.demoSignIn.enabled is true.
+auth:
+  providers:
+    demo: {}
+
+guardrails:
+  server:
+    # No default: a missing GUARDRAILS_SERVER_URL stops the start (BR4.1).
+    url: ${GUARDRAILS_SERVER_URL}
+  demoSignIn:
+    # Off unless the environment turns it on (BR4.2).
+    enabled: ${GUARDRAILS_DEMO_SIGN_IN:-false}
+
+catalog:
+  # The catalog is read from a committed file and cannot be edited (BR3.4).
+  readonly: true
+  locations:
+    - type: file
+      target: ./catalog/guardrails-catalog.yaml
+  rules:
+    - allow: [Component, User, Group]
