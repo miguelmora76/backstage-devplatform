@@ -1,0 +1,24 @@
+# Fixture: a compose file that breaks the rules on purpose (never used to run).
+services:
+  app:
+    image: node:latest
+    user: root
+    ports:
+      - '0.0.0.0:7007:7007'
+      - '9229:9229'
+    environment:
+      POSTGRES_PASSWORD: hunter2hunter2
+      APP_BASE_URL: http://localhost:7007
+      BACKEND_BASE_URL: http://localhost:7008
+    depends_on:
+      - postgres
+  guardrails-server:
+    image: example/server:1.2.3
+    user: '1000:1000'
+    environment:
+      GUARDRAILS_SEED: '42'
+  postgres:
+    image: postgres:16
+    user: '70:70'
+networks:
+  internal: {}

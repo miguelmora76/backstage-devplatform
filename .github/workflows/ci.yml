@@ -30,11 +30,14 @@ env:
   APP_NAME: app
   BACKEND: packages/backend
   BACKEND_NAME: backend
+  E2E: packages/e2e
+  E2E_NAME: e2e
 
 jobs:
   # Stage 1: Prettier check over all code (NFR6.1). Any difference fails.
   format:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,6 +50,7 @@ jobs:
   # Stage 2: ESLint with Backstage's usual settings. Any error fails.
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -64,10 +68,13 @@ jobs:
       # or ports written in source.
       - run: yarn --cwd ${{ env.APP }} backstage-cli package lint
       - run: yarn --cwd ${{ env.BACKEND }} backstage-cli package lint
+      # u5-compose-and-ci: the start script logic and the end-to-end checks.
+      - run: yarn --cwd ${{ env.E2E }} backstage-cli package lint
 
   # Stage 3: TypeScript compile without output. Any error fails.
   typecheck:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -80,12 +87,14 @@ jobs:
       - run: yarn tsc -p ${{ env.UI }}
       - run: yarn tsc -p ${{ env.BACKEND }}
       - run: yarn tsc -p ${{ env.APP }}
+      - run: yarn tsc -p ${{ env.E2E }}
 
   # Stage 4: all unit tests (including the 200-call benchmark, the 10-call
   # concurrency test, the log-line test and the settings tests) with the
   # coverage report. A failing test, or line coverage below 85%, fails.
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -106,6 +115,7 @@ jobs:
   repeatability:
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -126,6 +136,7 @@ jobs:
   contract:
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -142,6 +153,7 @@ jobs:
   image:
     needs: [repeatability, contract]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - name: Stage 7 - build the image (not pushed)
@@ -194,6 +206,7 @@ jobs:
   # fails.
   plugin-unit:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -208,11 +221,14 @@ jobs:
   # No Docker-in-Docker is needed. Any failing test fails.
   plugin-rules:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16.15-alpine3.24
         env:
           POSTGRES_USER: postgres
+          # Named exemption of the secret test (packages/e2e, NFR5.2): this
+          # throw-away login is valid only inside this job.
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: postgres
         ports:
@@ -239,11 +255,14 @@ jobs:
   plugin-coverage:
     needs: [plugin-unit, plugin-rules]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16.15-alpine3.24
         env:
           POSTGRES_USER: postgres
+          # Named exemption of the secret test (packages/e2e, NFR5.2): this
+          # throw-away login is valid only inside this job.
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: postgres
         ports:
@@ -275,6 +294,7 @@ jobs:
   # compared with the C1 file. Any mismatch fails.
   plugin-contract:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -288,6 +308,7 @@ jobs:
   # belongs to u4-backstage-app; its build is added to this job when it exists.
   plugin-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -304,6 +325,7 @@ jobs:
   # is in the package settings and is never lowered. Any failing test fails.
   ui-unit:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -324,6 +346,7 @@ jobs:
   ui-coverage:
     needs: ui-unit
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -343,6 +366,7 @@ jobs:
   # u2, and the sign-in start answer is checked against u2's own module.
   ui-contract:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -357,6 +381,7 @@ jobs:
   # job when it exists.
   ui-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -376,6 +401,7 @@ jobs:
   ui-checks:
     needs: ui-build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -393,6 +419,7 @@ jobs:
   # and is never lowered. Any failing test fails.
   app-unit:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -418,6 +445,7 @@ jobs:
   app-coverage:
     needs: app-unit
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -439,6 +467,7 @@ jobs:
   # failing check fails.
   app-startup:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -452,6 +481,7 @@ jobs:
   # the script gives the same bytes on two runs (NFR7.1, NFR2.4).
   app-catalog:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -472,6 +502,7 @@ jobs:
   # (NFR2.5, NFR5.4 to NFR5.6, NFR5.8). Any hit fails.
   app-checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -489,6 +520,7 @@ jobs:
   # (NFR7.2).
   app-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -505,3 +537,151 @@ jobs:
             ${{ env.APP }}/dist
             ${{ env.BACKEND }}/dist
       - run: yarn workspace ${{ env.BACKEND_NAME }} check:exit
+
+  # ---- u5-compose-and-ci: jobs for the compose run (packages/e2e) ----
+
+  # The unit tests of the start script logic and the file checks (compose
+  # file, image build file, ignore files, this workflow), with coverage. No
+  # Docker. The 85% line threshold is in the package settings and is never
+  # lowered. Also checks the package's dependencies against its allow-list.
+  e2e-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn workspace ${{ env.E2E_NAME }} check:packages
+      - run: yarn workspace ${{ env.E2E_NAME }} test --watchAll=false --coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-coverage
+          path: ${{ env.E2E }}/coverage
+          if-no-files-found: ignore
+
+  # Builds the app image (not pushed) and checks it: a non-root user, exactly
+  # one exposed port, at most 550 MB of file system
+  # (person-approved limit, raised from 500 MB), and the entry the start command runs
+  # exists inside the image (NFR1.4, NFR5.3).
+  app-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the app image (not pushed)
+        run: docker build -f ${{ env.BACKEND }}/Dockerfile -t guardrails-app:ci .
+      - name: Check non-root user, one exposed port, size and entry
+        run: |
+          user=$(docker image inspect guardrails-app:ci --format '{{.Config.User}}')
+          echo "image user: ${user}"
+          test -n "${user}" && test "${user}" != "root" && test "${user}" != "0"
+          ports=$(docker image inspect guardrails-app:ci --format '{{len .Config.ExposedPorts}}')
+          echo "exposed ports: ${ports}"
+          test "${ports}" = "1"
+          # File system size in MB (du -m), the same on every Docker image store.
+          size=$(docker run --rm --user 0 --entrypoint sh guardrails-app:ci -c 'du -sxm / 2>/dev/null | cut -f1')
+          echo "image size: ${size} MB (limit 550 MB)"
+          test "${size}" -le 550
+          docker run --rm --entrypoint sh guardrails-app:ci -c 'test -f packages/backend/package.json && test -f packages/backend/dist/index.cjs.js'
+
+  # Builds the three images, starts the sample, runs the real-browser, header,
+  # token, audit, repeatability and timing checks, the missing-address start
+  # and the output scan, then stops the sample. Needs Docker and the browsers
+  # only; no secret. Any failing check, a 95th percentile over 5000 ms, or a
+  # secret found in an output fails. Each step prints its time.
+  compose-e2e:
+    needs: app-image
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - name: Start the sample from a reset
+        run: |
+          time yarn compose:reset
+          time yarn compose:up
+      - name: Install Chrome and Firefox
+        run: time yarn workspace ${{ env.E2E_NAME }} playwright install --with-deps chrome firefox
+      - name: Flows, accessibility, keyboard, tree, headers, token, audit and repeatability
+        run: time yarn e2e specs
+      - name: Timing (20 loads of each view, Chrome)
+        run: time yarn e2e:timing
+      - name: Published ports, missing-address start and output scan
+        run: time yarn e2e checks
+      - name: Status and logs of every service on failure
+        if: failure()
+        run: |
+          docker compose --project-name guardrails-sample --env-file .env.compose ps --all
+          docker compose --project-name guardrails-sample --env-file .env.compose logs --no-color
+      - name: Stop the sample
+        if: always()
+        run: yarn compose:down
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-report
+          path: |
+            ${{ env.E2E }}/dist/out
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # The one status the repository requires (NFR2.5, FR10.1): it needs every
+  # other job, runs even when one fails, and fails itself unless every needed
+  # job succeeded.
+  ci-ok:
+    needs:
+      - format
+      - lint
+      - typecheck
+      - test
+      - repeatability
+      - contract
+      - image
+      - plugin-unit
+      - plugin-rules
+      - plugin-coverage
+      - plugin-contract
+      - plugin-build
+      - ui-unit
+      - ui-coverage
+      - ui-contract
+      - ui-build
+      - ui-checks
+      - app-unit
+      - app-coverage
+      - app-startup
+      - app-catalog
+      - app-checks
+      - app-build
+      - e2e-unit
+      - app-image
+      - compose-e2e
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fail unless every needed job succeeded
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "${NEEDS}" | node -e "
+            let text = '';
+            process.stdin.on('data', d => (text += d));
+            process.stdin.on('end', () => {
+              const needs = JSON.parse(text);
+              const bad = Object.entries(needs).filter(([, j]) => j.result !== 'success');
+              for (const [name, j] of Object.entries(needs)) console.log(name + ': ' + j.result);
+              if (bad.length > 0) {
+                console.error('Not successful: ' + bad.map(([name]) => name).join(', '));
+                process.exit(1);
+              }
+            });
+          "

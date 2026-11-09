@@ -272,3 +272,71 @@ The full text is in `aidlc/spaces/default/intents/261106-backstage-guardrails-pl
 ## Status of the units
 
 u1, u2 and u3 are built and merged. u4 (this unit) adds the app, the catalog, the settings, the CI jobs and this README. u5 will add the compose files, the real-browser checks and the rest of the CI workflow, and extend this README with the compose run; u6 (minikube) is optional and not started.
+
+## Run everything with docker compose
+
+Added by unit u5. You need Docker with Compose v2 and Yarn; nothing else.
+
+```bash
+yarn install
+yarn compose:up      # builds the three images, starts the sample, waits until it is healthy
+```
+
+Then open <http://localhost:7007> and choose a demo user. `compose:up` does everything itself: it creates `.env.compose` on the first run (a random database password, mode 0600, never printed, never committed), builds the app image and the guardrails server image, starts PostgreSQL, the guardrails server and the app in that order, and waits up to 180 seconds for all three to report healthy. On a failure it prints the status and the log of every service. The first build takes several minutes; later starts take well under a minute.
+
+What runs: the app (Backstage backend with the built frontend) on `127.0.0.1:7007` only, the guardrails server and PostgreSQL on a network that is closed to the host and the internet. Every container runs as a non-root user without capabilities and with a read-only root file system; the only writable places are listed in `compose.yaml`. The data is invented and the seed is fixed at `20261106`; `compose:up` refuses to start when `GUARDRAILS_SEED` is set to anything else.
+
+### Stopping and resetting
+
+| Command              | What it does                                                                        |
+| -------------------- | ----------------------------------------------------------------------------------- |
+| `yarn compose:down`  | Stops the containers and **keeps** the database volume (changes and audit log stay) |
+| `yarn compose:reset` | Stops the containers and **removes** the volume: the sample data is gone            |
+
+If `.env.compose` is deleted while the volume still exists, `compose:up` stops and tells you to run `yarn compose:reset`, because a new password could not open the old database. Always call compose through these commands (or add `--project-name guardrails-sample --env-file .env.compose` yourself) so a `.env` meant for `yarn start:local` is never read.
+
+### The demo sign-in risk in the compose run
+
+The compose run turns the passwordless demo sign-in on (`GUARDRAILS_DEMO_SIGN_IN=true`): anyone who can open the page can become any of the three demo users. That is acceptable only because the port is published on the loopback address and the data is invented. Replace the demo provider and supply the database login from a secret store before any hosted use. The shipped settings still default the sign-in to off.
+
+### The end-to-end checks
+
+With the sample up (start from `yarn compose:reset` and `yarn compose:up` so the tables are empty):
+
+```bash
+yarn workspace e2e playwright install chrome firefox   # once
+yarn e2e            # flows, accessibility, keyboard, accessibility tree, headers, token, audit, repeatability, then ports, missing-address start and output scan
+yarn e2e:timing     # 20 loads of each view in Chrome; exits non-zero above 5000 ms at the 95th percentile
+yarn workspace e2e test --watchAll=false --coverage   # the unit tests of the helpers and file checks (no Docker)
+```
+
+Reports and timing numbers are written to `packages/e2e/dist/out/`. Trace, video and HAR capture are off so that tokens and headers are never recorded; after each run the logs and the report folder are searched for the database password and for token-shaped text.
+
+### Making the CI result block a merge
+
+The workflow ends with one job, `ci-ok`, that needs every other job and fails unless all of them succeeded. A repository setting cannot be committed as code, so set it once in GitHub: **Settings > Branches > branch protection rule for `main` > Require status checks to pass before merging > add `ci-ok`**. Doing it per job would need a settings change for every new job.
+
+### Screen-reader checklist (done by a person, once)
+
+No pipeline can run a screen reader. With VoiceOver and Chrome (macOS), or NVDA and Firefox (Windows), do each of these and note the result in the pull request:
+
+1. Open the sample, hear the three "Sign in as ..." choices, and sign in as Sam.
+2. Open a service, then its Guardrails tab, and read the upgrade plan table (names, current and recommended versions).
+3. Propose an upgrade and hear the confirmation.
+4. Switch to Priya, open the change, try to approve without a reason (hear the error), then approve with one.
+5. Read the audit log and use its filters and paging.
+
+### Browser versions
+
+Chrome is the stable channel installed on the machine or runner and moves on its own; Firefox is the build shipped with the pinned Playwright version (`@playwright/test` 1.65.0, checked on 2026-11-09). Each run prints the versions it used. Raise the pin in a pull request to move Firefox.
+
+### Troubleshooting the compose run
+
+| Symptom                                                           | Cause and fix                                                                       |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `Docker is not installed` or `Docker Compose v2 is not available` | Install or update Docker; `docker compose version` must work                        |
+| `.env.compose is missing but the database volume ... exists`      | Run `yarn compose:reset`, then `yarn compose:up`                                    |
+| `GUARDRAILS_SEED is set to another value`                         | Unset it; the compose sample only runs with `20261106`                              |
+| `did not become healthy within 180 seconds`                       | Read the printed service logs; a crash shows because nothing restarts by itself     |
+| The page shows the sign-in again after a reload                   | By design: the sign-in is held in memory only                                       |
+| Port 7007 is already in use                                       | Stop `yarn start:local` or whatever uses it; the compose run needs `127.0.0.1:7007` |

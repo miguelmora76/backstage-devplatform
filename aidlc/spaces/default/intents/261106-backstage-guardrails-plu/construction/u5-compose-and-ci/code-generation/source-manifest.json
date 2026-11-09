@@ -1,0 +1,226 @@
+{
+  "stage": "code-generation",
+  "unit": "u5-compose-and-ci",
+  "version": 1,
+  "writes": [
+    {
+      "path": ".dockerignore"
+    },
+    {
+      "path": ".github/workflows/ci.yml"
+    },
+    {
+      "path": ".gitignore"
+    },
+    {
+      "path": "README.md"
+    },
+    {
+      "path": "compose.yaml"
+    },
+    {
+      "path": "package.json"
+    },
+    {
+      "path": "yarn.lock"
+    },
+    {
+      "path": "packages/backend/Dockerfile"
+    },
+    {
+      "path": "packages/e2e/.eslintrc.js"
+    },
+    {
+      "path": "packages/e2e/allowed-packages.txt"
+    },
+    {
+      "path": "packages/e2e/package.json"
+    },
+    {
+      "path": "packages/e2e/playwright.config.ts"
+    },
+    {
+      "path": "packages/e2e/tsconfig.build.json"
+    },
+    {
+      "path": "packages/e2e/tsconfig.json"
+    },
+    {
+      "path": "packages/e2e/bin/common.mjs"
+    },
+    {
+      "path": "packages/e2e/bin/compose-down.mjs"
+    },
+    {
+      "path": "packages/e2e/bin/compose-reset.mjs"
+    },
+    {
+      "path": "packages/e2e/bin/compose-up.mjs"
+    },
+    {
+      "path": "packages/e2e/bin/e2e-timing.mjs"
+    },
+    {
+      "path": "packages/e2e/bin/e2e.mjs"
+    },
+    {
+      "path": "packages/e2e/specs/a11y.spec.ts"
+    },
+    {
+      "path": "packages/e2e/specs/audit-append-only.spec.ts"
+    },
+    {
+      "path": "packages/e2e/specs/flows.spec.ts"
+    },
+    {
+      "path": "packages/e2e/specs/headers-token.spec.ts"
+    },
+    {
+      "path": "packages/e2e/specs/keyboard.spec.ts"
+    },
+    {
+      "path": "packages/e2e/specs/repeatability.spec.ts"
+    },
+    {
+      "path": "packages/e2e/specs/timing.spec.ts"
+    },
+    {
+      "path": "packages/e2e/specs/tree.spec.ts"
+    },
+    {
+      "path": "packages/e2e/specs/support/api.ts"
+    },
+    {
+      "path": "packages/e2e/specs/support/screens.ts"
+    },
+    {
+      "path": "packages/e2e/specs/support/seed.ts"
+    },
+    {
+      "path": "packages/e2e/specs/support/stack.ts"
+    },
+    {
+      "path": "packages/e2e/specs/support/ui.ts"
+    },
+    {
+      "path": "packages/e2e/src/allowList.ts"
+    },
+    {
+      "path": "packages/e2e/src/allowList.test.ts"
+    },
+    {
+      "path": "packages/e2e/src/checkDocker.ts"
+    },
+    {
+      "path": "packages/e2e/src/checkDocker.test.ts"
+    },
+    {
+      "path": "packages/e2e/src/commands.ts"
+    },
+    {
+      "path": "packages/e2e/src/commands.test.ts"
+    },
+    {
+      "path": "packages/e2e/src/composeArgs.ts"
+    },
+    {
+      "path": "packages/e2e/src/composeArgs.test.ts"
+    },
+    {
+      "path": "packages/e2e/src/composeCheck.ts"
+    },
+    {
+      "path": "packages/e2e/src/composeCheck.test.ts"
+    },
+    {
+      "path": "packages/e2e/src/dockerfileCheck.ts"
+    },
+    {
+      "path": "packages/e2e/src/dockerfileCheck.test.ts"
+    },
+    {
+      "path": "packages/e2e/src/e2eRun.ts"
+    },
+    {
+      "path": "packages/e2e/src/e2eRun.test.ts"
+    },
+    {
+      "path": "packages/e2e/src/envFile.ts"
+    },
+    {
+      "path": "packages/e2e/src/envFile.test.ts"
+    },
+    {
+      "path": "packages/e2e/src/ignoreCheck.ts"
+    },
+    {
+      "path": "packages/e2e/src/ignoreCheck.test.ts"
+    },
+    {
+      "path": "packages/e2e/src/index.ts"
+    },
+    {
+      "path": "packages/e2e/src/percentile.ts"
+    },
+    {
+      "path": "packages/e2e/src/percentile.test.ts"
+    },
+    {
+      "path": "packages/e2e/src/repoRoot.ts"
+    },
+    {
+      "path": "packages/e2e/src/repoRoot.test.ts"
+    },
+    {
+      "path": "packages/e2e/src/runner.ts"
+    },
+    {
+      "path": "packages/e2e/src/scanOutputs.ts"
+    },
+    {
+      "path": "packages/e2e/src/scanOutputs.test.ts"
+    },
+    {
+      "path": "packages/e2e/src/secretCheck.ts"
+    },
+    {
+      "path": "packages/e2e/src/verify.ts"
+    },
+    {
+      "path": "packages/e2e/src/verify.test.ts"
+    },
+    {
+      "path": "packages/e2e/src/workflowCheck.ts"
+    },
+    {
+      "path": "packages/e2e/src/workflowCheck.test.ts"
+    },
+    {
+      "path": "packages/e2e/src/testing/zip.ts"
+    },
+    {
+      "path": "packages/e2e/src/testing/fixtures/Dockerfile.bad"
+    },
+    {
+      "path": "packages/e2e/src/testing/fixtures/compose-bad.yaml"
+    },
+    {
+      "path": "packages/e2e/src/testing/fixtures/workflow-bad.yaml"
+    },
+    {
+      "path": "packages/app/src/signInModule.tsx"
+    },
+    {
+      "path": "packages/app/src/a11y/catalogA11y.ts"
+    },
+    {
+      "path": "packages/app/src/a11y/catalogA11y.test.ts"
+    },
+    {
+      "path": "packages/app/src/a11y/CatalogA11yFix.tsx"
+    },
+    {
+      "path": "packages/app/src/a11y/CatalogA11yFix.test.tsx"
+    }
+  ]
+}
