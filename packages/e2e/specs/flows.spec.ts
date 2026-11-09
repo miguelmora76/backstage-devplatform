@@ -1,19 +1,33 @@
 import { expect, test } from '@playwright/test';
 import { client, signIn } from './support/api';
 import { seededDependencies, seededFailedRuns } from './support/seed';
-import { killService, startService } from './support/stack';
+import { waitForHealthyStack } from './support/healthy';
+import { containerId, killContainer, startService } from './support/stack';
 import { openService, switchUser } from './support/ui';
 
 // NFR4.1: the flows of FR1 to FR4 in Chrome and Firefox: view the plan,
 // propose an upgrade, view failed runs, propose a re-run, approve, reject
 // (a reason is required), retry a failed change, filter and page the audit
 // log. Each browser uses its own service, so the two runs never meet.
+/** The plugin backend reuses a health probe result for this long (BR7.1). */
+const HEALTH_TTL_MS = 5000;
+
 const SERVICE_OF: Record<string, string> = {
   chrome: 'profile-sync',
   firefox: 'catalog-portal',
 };
 
 test.describe.configure({ mode: 'serial' });
+
+test.beforeAll(async ({ playwright }) => {
+  // Every browser spec starts from a stack that really answers (an earlier
+  // spec may have ended the guardrails server).
+  const request = await playwright.request.newContext({
+    baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:7007',
+  });
+  await waitForHealthyStack(request);
+  await request.dispose();
+});
 
 test('the whole flow of plan, proposals, decisions, retry and audit', async ({
   page,
@@ -69,33 +83,42 @@ test('the whole flow of plan, proposals, decisions, retry and audit', async ({
   await page.getByRole('button', { name: 'Reject' }).click();
   await expect(page.getByText('Change rejected.').first()).toBeVisible();
 
-  // A failed change, then a retry: the server is down while it is approved.
+  // A failed change, then a retry. FR3.6: an approval whose apply call gets
+  // no answer from the server leaves the change failed. The plugin backend,
+  // however, refuses a decision with 503 when its health probe says the server
+  // is down, and it reuses a probe result for 5 seconds (serverHealth.ts). So
+  // the state to build is: a probe that answered "reachable" a moment ago, then
+  // the server ends, then the decision (all inside those 5 seconds).
   const sam = client(request, await signIn(request, 'sam'));
+  const priya = client(request, await signIn(request, 'priya'));
+  const server = containerId('guardrails-server');
+  // Let any earlier probe result expire, so the next write probes afresh.
+  await new Promise(resolve => setTimeout(resolve, HEALTH_TTL_MS + 500));
   const proposed = await sam.propose(
     service,
     'upgrade',
     seededDependencies(service).find(d => d.name === second)!.dependencyKey,
   );
   expect(proposed.status).toBe(201);
-  const priya = client(request, await signIn(request, 'priya'));
-  // A read just before the kill refreshes the plugin's 5-second health result
-  // to "reachable"; the approval then reaches the dead server and the change
-  // fails (FR3.6). Without a fresh result the approval is refused with 503.
-  expect((await priya.plan(service)).status).toBe(200);
-  killService('guardrails-server');
+  const probedAt = Date.now();
+  let failed;
+  let gap = 0;
   try {
-    const failed = await priya.decide(
+    killContainer(server);
+    failed = await priya.decide(
       proposed.body.changeId,
       'approve',
       'server is down',
     );
-    expect(
-      failed.body?.status,
-      `approve while the server is down: HTTP ${failed.status}, body ${JSON.stringify(failed.body)}`,
-    ).toBe('failed');
+    gap = Date.now() - probedAt;
   } finally {
     await startService('guardrails-server');
+    await waitForHealthyStack(request);
   }
+  expect(
+    failed.body?.status,
+    `approve while the server is down, ${gap} ms after the last probe (the plugin reuses a probe for ${HEALTH_TTL_MS} ms): HTTP ${failed.status}, body ${JSON.stringify(failed.body)}`,
+  ).toBe('failed');
   await switchUser(page, 'sam');
   await switchUser(page, 'priya');
   await expect(page.getByText('Failed').first()).toBeVisible();

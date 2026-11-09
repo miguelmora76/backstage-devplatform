@@ -76,6 +76,17 @@ export function views({ service, changeId }: Prepared): View[] {
         await expect(
           page.getByRole('link', { name: 'checkout-bridge' }),
         ).toBeVisible();
+        // The list is drawn while a progress indicator without a name is shown
+        // (axe aria-progressbar-name); scan only when loading has finished.
+        await expect(page.getByRole('progressbar')).toHaveCount(0);
+        // The app repairs the list's markup after it renders (a11y/catalogA11y);
+        // wait for the repaired state so the scan never sees the unrepaired one.
+        await expect(
+          page.locator('[role="combobox"]:not([aria-label])'),
+        ).toHaveCount(0);
+        await expect(
+          page.locator('th [role="button"] [role="button"]'),
+        ).toHaveCount(0);
         await expect(
           page.getByRole('link', {
             name: /^(catalog-portal|checkout-bridge|inventory-bridge|notify-console|profile-sync|profile-worker)$/,

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { waitForHealthyStack } from './support/healthy';
 import { seededDependencies } from './support/seed';
 import { openSignIn } from './support/ui';
 
@@ -10,6 +11,16 @@ const SERVICE_OF: Record<string, string> = {
   chrome: 'notify-console',
   firefox: 'inventory-bridge',
 };
+
+test.beforeAll(async ({ playwright }) => {
+  // Starts from a stack that really answers (an earlier spec may have ended
+  // the guardrails server).
+  const request = await playwright.request.newContext({
+    baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:7007',
+  });
+  await waitForHealthyStack(request);
+  await request.dispose();
+});
 
 /**
  * Page-side helpers, installed before every page load: the name of an element

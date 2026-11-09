@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { waitForHealthyStack } from './support/healthy';
 import { prepareChanges, views, type Prepared } from './support/screens';
 
 // NFR3.3: every interactive element has an accessible name and role in the
@@ -22,6 +23,7 @@ test.beforeAll(async ({ playwright }) => {
   const request = await playwright.request.newContext({
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:7007',
   });
+  await waitForHealthyStack(request);
   state.prepared = await prepareChanges(request);
   await request.dispose();
 });

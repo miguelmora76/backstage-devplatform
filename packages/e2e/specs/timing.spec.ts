@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { percentile } from '../src/percentile';
+import { waitForHealthyStack } from './support/healthy';
 import { prepareChanges, views } from './support/screens';
 
 // NFR1.1: each view shows its data within 5 seconds on the compose sample.
@@ -18,6 +19,7 @@ test('the 95th percentile of 20 loads of each view is at most 5 seconds', async 
   const request = await playwright.request.newContext({
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:7007',
   });
+  await waitForHealthyStack(request);
   const prepared = await prepareChanges(request);
   await request.dispose();
 

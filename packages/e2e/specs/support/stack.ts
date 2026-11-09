@@ -17,14 +17,24 @@ function docker(extra: string[]) {
   return result.stdout;
 }
 
+/** The id of the service's container, read before it is ended. */
+export function containerId(service: string): string {
+  const id = docker(['ps', '--quiet', service]).trim();
+  if (!id) throw new Error(`No running container for ${service}`);
+  return id;
+}
+
 /**
- * Ends the container at once (SIGKILL), not after a grace period. The plugin
- * backend reuses a health probe result for 5 seconds, so a slow stop would let
- * the cached "reachable" result expire and the approval would be refused with
- * 503 instead of failing the change (the case on the Linux runner).
+ * Ends a container at once (SIGKILL) by its id: one quick docker call, not a
+ * stop with a grace period and not a compose call, so the time between the
+ * last health probe of the plugin backend and the end of the server stays far
+ * below the 5 seconds the plugin reuses a probe result for.
  */
-export function killService(service: string): void {
-  docker(['kill', service]);
+export function killContainer(id: string): void {
+  const result = spawnSync('docker', ['kill', id], { encoding: 'utf8' });
+  if (result.status !== 0) {
+    throw new Error(`docker kill failed: ${result.stderr}`);
+  }
 }
 
 export async function startService(service: string): Promise<void> {
