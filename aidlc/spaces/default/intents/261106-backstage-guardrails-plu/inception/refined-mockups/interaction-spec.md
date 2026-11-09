@@ -131,7 +131,7 @@ A change that is not in the right state (not pending for Approve and Reject, not
 ### Audit filters
 
 - **Fields:** time range (From and To date inputs), actor, action, outcome (FR4.3). Each has a visible label. If To is before From, `error.dateRange` is shown under the dates, linked to them, and the filter is not applied.
-- **Order and paging:** newest first; 10 rows per page with `label.previous`, `label.next` and `label.pageOf`; changing a filter returns to page 1. The upgrade plan and CI triage lists page the same way. Action values: Propose upgrade, Propose re-run, Approve, Reject, Retry. Outcome values: Proposed, Applied, Rejected, Failed, Refused.
+- **Order and paging:** newest first; 10 rows per page with `label.previous`, `label.next` and `label.pageOf`; changing a filter returns to page 1. The upgrade plan and CI triage lists page the same way. Action values: Propose, Approve, Reject, Retry (catalog keys `action.propose` to `action.retry`; one word for both kinds of proposal, because the audit entry does not carry the kind). Outcome values: Proposed, Applied, Rejected, Failed, Refused.
 - **Behavior:** applying a filter updates the table in place; "Clear filters" resets; `empty.auditFiltered` shows when nothing matches.
 - **Scope:** this service only (Q8: A).
 

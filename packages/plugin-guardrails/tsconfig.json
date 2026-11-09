@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["src"],
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "../../dist-types/packages/plugin-guardrails",
+    "jsx": "react-jsx",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["node", "jest", "@testing-library/jest-dom"]
+  },
+  "exclude": ["../../node_modules"]
+}
