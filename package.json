@@ -11,13 +11,18 @@
     ]
   },
   "scripts": {
-    "tsc": "tsc && tsc -p packages/plugin-guardrails && tsc -p packages/app",
+    "tsc": "tsc && tsc -p packages/plugin-guardrails && tsc -p packages/app && tsc -p packages/e2e",
     "start:local": "node packages/backend/scripts/start-local.mjs",
     "tsc:full": "tsc --skipLibCheck false --incremental false",
     "test": "backstage-cli repo test",
     "lint": "backstage-cli repo lint",
     "prettier:check": "prettier --check .",
-    "prettier:fix": "prettier --write ."
+    "prettier:fix": "prettier --write .",
+    "compose:up": "node packages/e2e/bin/compose-up.mjs",
+    "compose:down": "node packages/e2e/bin/compose-down.mjs",
+    "compose:reset": "node packages/e2e/bin/compose-reset.mjs",
+    "e2e": "node packages/e2e/bin/e2e.mjs",
+    "e2e:timing": "node packages/e2e/bin/e2e-timing.mjs"
   },
   "devDependencies": {
     "@backstage/cli": "^0.36.7",

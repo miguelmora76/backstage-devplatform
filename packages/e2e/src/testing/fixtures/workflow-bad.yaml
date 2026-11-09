@@ -1,0 +1,25 @@
+# Fixture: a workflow that breaks the rules on purpose (never used to run).
+name: Bad
+on:
+  pull_request_target:
+permissions: write-all
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: sup3rsecretvalue
+    steps:
+      - uses: someone/else-action@main
+      - run: echo ${{ secrets.TOKEN }}
+      - run: docker login registry.example.org
+      - run: docker push example/image:1
+  ci-ok:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - run: echo done

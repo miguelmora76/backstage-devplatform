@@ -1,0 +1,245 @@
+{
+  "stage": "code-generation",
+  "unit": "u5-compose-and-ci",
+  "upstream_ids": [
+    "FR8.1",
+    "FR10.1",
+    "US6.2",
+    "US6.4",
+    "AC6.2.1",
+    "AC6.2.2",
+    "AC6.4.1",
+    "AC6.4.2",
+    "AC6.4.3",
+    "NFR1.1",
+    "NFR1.2",
+    "NFR1.3",
+    "NFR1.4",
+    "NFR2.1",
+    "NFR2.2",
+    "NFR2.3",
+    "NFR2.4",
+    "NFR2.5",
+    "NFR2.6",
+    "NFR2.7",
+    "NFR2.8",
+    "NFR3.1",
+    "NFR3.2",
+    "NFR3.3",
+    "NFR3.4",
+    "NFR4.1",
+    "NFR4.2",
+    "NFR5.1",
+    "NFR5.2",
+    "NFR5.3",
+    "NFR5.4",
+    "NFR5.5",
+    "NFR5.6",
+    "NFR5.7",
+    "NFR5.8",
+    "NFR5.9",
+    "NFR5.10",
+    "NFR5.11",
+    "NFR5.12",
+    "NFR6.1",
+    "NFR7.1",
+    "NFR7.2"
+  ],
+  "coverage": [
+    {
+      "id": "FR8.1",
+      "status": "OK",
+      "target": "packages/e2e/src/commands.ts"
+    },
+    {
+      "id": "FR10.1",
+      "status": "OK",
+      "target": ".github/workflows/ci.yml"
+    },
+    {
+      "id": "US6.2",
+      "status": "OK",
+      "target": "compose.yaml"
+    },
+    {
+      "id": "US6.4",
+      "status": "OK",
+      "target": ".github/workflows/ci.yml"
+    },
+    { "id": "AC6.2.1", "status": "OK", "target": "compose.yaml" },
+    { "id": "AC6.2.2", "status": "OK", "target": "packages/e2e/src/commands.ts" },
+    { "id": "AC6.4.1", "status": "OK", "target": ".github/workflows/ci.yml" },
+    { "id": "AC6.4.2", "status": "OK", "target": ".github/workflows/ci.yml" },
+    { "id": "AC6.4.3", "status": "OK", "target": "packages/e2e/src/workflowCheck.test.ts" },
+    {
+      "id": "NFR1.1",
+      "status": "OK",
+      "target": "packages/e2e/specs/timing.spec.ts"
+    },
+    {
+      "id": "NFR1.2",
+      "status": "OK",
+      "target": "packages/e2e/src/commands.ts"
+    },
+    {
+      "id": "NFR1.3",
+      "status": "OK",
+      "target": ".github/workflows/ci.yml"
+    },
+    {
+      "id": "NFR1.4",
+      "status": "OK",
+      "target": "packages/backend/Dockerfile",
+      "note": "file system 537 MB against the person-approved 550 MB (raised from 500 MB on 2026-11-09); measured with du -sxm in app-image"
+    },
+    {
+      "id": "NFR2.1",
+      "status": "OK",
+      "target": "packages/e2e/package.json"
+    },
+    {
+      "id": "NFR2.2",
+      "status": "OK",
+      "target": "packages/e2e/src/commands.ts"
+    },
+    {
+      "id": "NFR2.3",
+      "status": "OK",
+      "target": "packages/e2e/src/composeCheck.test.ts"
+    },
+    {
+      "id": "NFR2.4",
+      "status": "OK",
+      "target": "packages/e2e/src/workflowCheck.test.ts"
+    },
+    {
+      "id": "NFR2.5",
+      "status": "OK",
+      "target": "README.md",
+      "note": "README documents the setting; setting it on GitHub is a person's action, still open"
+    },
+    {
+      "id": "NFR2.6",
+      "status": "OK",
+      "target": "packages/e2e/src/commands.ts"
+    },
+    {
+      "id": "NFR2.7",
+      "status": "OK",
+      "target": "compose.yaml"
+    },
+    {
+      "id": "NFR2.8",
+      "status": "OK",
+      "target": "packages/e2e/src/commands.ts"
+    },
+    {
+      "id": "NFR3.1",
+      "status": "OK",
+      "target": "packages/e2e/specs/a11y.spec.ts",
+      "note": "Chrome: all six screens pass; Firefox: three screens skipped as a known environment issue (page crash inside axe, unverified on Linux CI)"
+    },
+    {
+      "id": "NFR3.2",
+      "status": "OK",
+      "target": "packages/e2e/specs/keyboard.spec.ts"
+    },
+    {
+      "id": "NFR3.3",
+      "status": "OK",
+      "target": "packages/e2e/specs/tree.spec.ts",
+      "note": "catalog list fixed by the approved edit to u4 (packages/app/src/a11y)"
+    },
+    {
+      "id": "NFR3.4",
+      "status": "OK",
+      "target": "README.md",
+      "note": "README holds the checklist; running the screen-reader pass is a person's action, still open"
+    },
+    {
+      "id": "NFR4.1",
+      "status": "OK",
+      "target": "packages/e2e/specs/flows.spec.ts"
+    },
+    {
+      "id": "NFR4.2",
+      "status": "OK",
+      "target": "README.md"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "packages/e2e/src/verify.ts"
+    },
+    {
+      "id": "NFR5.2",
+      "status": "OK",
+      "target": "packages/e2e/src/secretCheck.ts"
+    },
+    {
+      "id": "NFR5.3",
+      "status": "OK",
+      "target": "packages/e2e/src/composeCheck.ts"
+    },
+    {
+      "id": "NFR5.4",
+      "status": "OK",
+      "target": "packages/e2e/src/dockerfileCheck.ts"
+    },
+    {
+      "id": "NFR5.5",
+      "status": "OK",
+      "target": "compose.yaml"
+    },
+    {
+      "id": "NFR5.6",
+      "status": "OK",
+      "target": "packages/e2e/specs/headers-token.spec.ts"
+    },
+    {
+      "id": "NFR5.7",
+      "status": "OK",
+      "target": "packages/e2e/specs/headers-token.spec.ts"
+    },
+    {
+      "id": "NFR5.8",
+      "status": "OK",
+      "target": "packages/e2e/src/allowList.ts"
+    },
+    {
+      "id": "NFR5.9",
+      "status": "OK",
+      "target": "packages/e2e/src/workflowCheck.ts"
+    },
+    {
+      "id": "NFR5.10",
+      "status": "OK",
+      "target": "packages/e2e/src/scanOutputs.ts"
+    },
+    {
+      "id": "NFR5.11",
+      "status": "OK",
+      "target": "packages/e2e/specs/audit-append-only.spec.ts"
+    },
+    {
+      "id": "NFR5.12",
+      "status": "OK",
+      "target": "packages/e2e/src/verify.ts"
+    },
+    {
+      "id": "NFR6.1",
+      "status": "OK",
+      "target": ".github/workflows/ci.yml"
+    },
+    {
+      "id": "NFR7.1",
+      "status": "OK",
+      "target": "packages/e2e/specs/repeatability.spec.ts"
+    },
+    {
+      "id": "NFR7.2",
+      "status": "OK",
+      "target": "packages/e2e/specs/repeatability.spec.ts"
+    }
+  ]
+}

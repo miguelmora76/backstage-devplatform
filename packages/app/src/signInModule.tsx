@@ -1,12 +1,14 @@
 import { useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
+  AppRootElementBlueprint,
   createFrontendModule,
   discoveryApiRef,
   PageBlueprint,
   useApi,
 } from '@backstage/frontend-plugin-api';
 import { SignInPageBlueprint } from '@backstage/plugin-app-react';
+import { CatalogA11yFix } from './a11y/CatalogA11yFix';
 import { SignInPage, type SignInPageProps } from './signin/SignInPage';
 import { createSignInClient } from './signin/signInClient';
 
@@ -36,7 +38,8 @@ export function HomeRedirect() {
 
 /**
  * Puts the demo sign-in page (BR2.2) and the root redirect into the app
- * plugin. The only two things the app adds to Backstage's own pages.
+ * plugin, plus the small accessibility repair of the catalog list (approved
+ * edit of u5). The only things the app adds to Backstage's own pages.
  */
 export const signInModule = createFrontendModule({
   pluginId: 'app',
@@ -47,6 +50,10 @@ export const signInModule = createFrontendModule({
     PageBlueprint.make({
       name: 'home-redirect',
       params: { path: '/', loader: async () => <HomeRedirect /> },
+    }),
+    AppRootElementBlueprint.make({
+      name: 'catalog-a11y-fix',
+      params: { element: <CatalogA11yFix /> },
     }),
   ],
 });

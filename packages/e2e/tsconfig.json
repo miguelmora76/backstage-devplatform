@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["src", "specs"],
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "../../dist-types/packages/e2e",
+    "lib": ["ES2023", "DOM"]
+  }
+}

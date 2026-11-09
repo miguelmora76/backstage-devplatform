@@ -1,0 +1,136 @@
+# One-command run of the guardrails sample (u5-compose-and-ci).
+#
+#   yarn compose:up      creates .env.compose on the first run, builds, starts,
+#                        waits until the three containers are healthy
+#   yarn compose:down    stops the containers and keeps the database volume
+#   yarn compose:reset   stops them and removes the volume (the data is lost)
+#
+# Do not call `docker compose` on this file by hand without
+# `--project-name guardrails-sample --env-file .env.compose`: the values below
+# come from .env.compose, which the start script generates (untracked, mode
+# 0600). This file holds no password, no token and no address of this machine.
+#
+# Rules this file follows (each is a unit test in packages/e2e):
+# - exactly one published port, on 127.0.0.1 (NFR5.1);
+# - every container: non-root user, no capabilities, no new privileges,
+#   read-only root file system with a short named list of writable paths,
+#   a health check, no automatic restart (NFR5.3, NFR2.7);
+# - the app starts only after the server and the database are healthy.
+
+services:
+  postgres:
+    # Alpine variant at an exact tag, the same as the two plugin jobs of the
+    # workflow (NFR5.4). In this image the postgres user is 70.
+    image: postgres:16.15-alpine3.24
+    user: '70:70'
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    restart: 'no'
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    # Writable: the data volume, /tmp and the socket directory.
+    tmpfs:
+      - /tmp:size=64m
+      - /var/run/postgresql:size=8m
+    mem_limit: 512m
+    pids_limit: 128
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks: [internal]
+
+  guardrails-server:
+    # The u1 image, built as it is. It writes nothing to disk.
+    build:
+      context: .
+      dockerfile: packages/guardrails-server/Dockerfile
+    user: '1000:1000'
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    restart: 'no'
+    environment:
+      # The fixed seed is a literal on purpose (NFR7.1).
+      GUARDRAILS_SEED: '20261106'
+      PORT: '7007'
+    mem_limit: 256m
+    pids_limit: 128
+    healthcheck:
+      test:
+        ['CMD', 'node', 'packages/guardrails-server/dist/probe/healthcheck.js']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    networks: [internal]
+
+  app:
+    # Backstage backend serving the built frontend (packages/backend/Dockerfile).
+    build:
+      context: .
+      dockerfile: packages/backend/Dockerfile
+    user: '1000:1000'
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    restart: 'no'
+    ports:
+      - '127.0.0.1:7007:7007'
+    environment:
+      GUARDRAILS_SERVER_URL: http://guardrails-server:7007
+      # Passwordless sign-in: on in this local demo only (NFR5.5). See README.
+      GUARDRAILS_DEMO_SIGN_IN: 'true'
+      # The two base addresses must be equal in this run.
+      APP_BASE_URL: http://localhost:7007
+      BACKEND_BASE_URL: http://localhost:7007
+      BACKEND_PORT: '7007'
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # Writable: /tmp, and the frontend static directory, because the app
+    # backend plugin rewrites the frontend files at start to inject settings.
+    # The image copies its pristine static files in before the backend starts.
+    tmpfs:
+      - /tmp:size=64m
+      - /app/node_modules/app/dist/static:size=64m,uid=1000,gid=1000,mode=0755
+    mem_limit: 1g
+    pids_limit: 256
+    depends_on:
+      guardrails-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:7007/.backstage/health/v1/readiness').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    networks: [edge, internal]
+
+networks:
+  # Outward-facing: only the app joins it.
+  edge: {}
+  # The server and the database live here; no route to the host or the internet.
+  internal:
+    internal: true
+
+volumes:
+  postgres-data: {}

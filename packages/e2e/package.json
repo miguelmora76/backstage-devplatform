@@ -1,0 +1,57 @@
+{
+  "name": "e2e",
+  "version": "0.1.0",
+  "description": "Start script logic, file checks and real-browser checks for the compose run of the guardrails sample (u5-compose-and-ci)",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "backstage": {
+    "role": "node-library"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "backstage-cli package lint",
+    "test": "backstage-cli package test --watchAll=false",
+    "check:packages": "node ../backend/scripts/check-packages.mjs .",
+    "playwright": "playwright",
+    "clean": "backstage-cli package clean"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@backstage/cli": "^0.36.7",
+    "@playwright/test": "1.65.0",
+    "@types/node": "^24.19.2",
+    "yaml": "2.9.1"
+  },
+  "files": [
+    "dist",
+    "specs",
+    "bin"
+  ],
+  "jest": {
+    "collectCoverageFrom": [
+      "**/*.ts",
+      "!**/*.d.ts",
+      "!**/*.test.ts",
+      "!index.ts",
+      "!**/testing/**"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "lines": 85
+      }
+    },
+    "coverageReporters": [
+      "text",
+      "text-summary",
+      "json-summary",
+      "lcov"
+    ],
+    "testTimeout": 30000
+  }
+}

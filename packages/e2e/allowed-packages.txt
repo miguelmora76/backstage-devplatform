@@ -1,0 +1,9 @@
+# Packages the e2e package may depend on (NFR5.8, tech-stack-decisions.md).
+# The browser tool and its accessibility library are the only runtime
+# additions; yaml reads the compose file and the workflow in the unit tests.
+# Adding one on purpose means editing this file in the same pull request.
+@axe-core/playwright
+@backstage/cli
+@playwright/test
+@types/node
+yaml

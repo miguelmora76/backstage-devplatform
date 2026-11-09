@@ -1,0 +1,9 @@
+# Fixture: an image file that breaks the rules on purpose (never built).
+ARG NODE_IMAGE=node:latest
+FROM ${NODE_IMAGE} AS build
+FROM alpine
+ARG API_TOKEN=abc12345678
+WORKDIR /app
+COPY packages/backend/app-config.yaml ./
+EXPOSE 7007 9229
+CMD ["sh", "-c", "exec node packages/backend --config app-config.yaml --config app-config.postgres.yaml"]

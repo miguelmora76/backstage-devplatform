@@ -1,6 +1,8 @@
 **/node_modules
 **/dist
 **/coverage
+**/dist-types
+.env*
 .git
 .github
 .claude

@@ -1,0 +1,98 @@
+{
+  "stage": "nfr-design",
+  "unit": "u5-compose-and-ci",
+  "upstream_ids": [
+    "NFR2.3",
+    "NFR5.6",
+    "NFR7.2",
+    "NFR5.3",
+    "NFR5.1",
+    "NFR5.2",
+    "NFR5.4",
+    "NFR5.5",
+    "NFR5.7",
+    "NFR5.8",
+    "NFR5.9",
+    "NFR1.3",
+    "NFR5.10",
+    "NFR5.11",
+    "NFR5.12"
+  ],
+  "coverage": [
+    {
+      "id": "NFR2.3",
+      "status": "OK",
+      "target": "Compose-file tests in the e2e-unit job: one loopback port, rights on every service, health checks, start order, equal base URLs, named volume"
+    },
+    {
+      "id": "NFR5.6",
+      "status": "OK",
+      "target": "headers-token spec: Origin checks and the Content-Security-Policy read from the running app"
+    },
+    {
+      "id": "NFR7.2",
+      "status": "OK",
+      "target": "Reset before the end-to-end run, empty lists checked; missing-address run with docker compose run --no-deps"
+    },
+    {
+      "id": "NFR5.3",
+      "status": "OK",
+      "target": "Non-root, cap_drop ALL, no-new-privileges on every service; writable-path table; pristine static copy into a tmpfs; written exception as fallback"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "One 127.0.0.1 ports entry; internal network for server and database; compose-file test"
+    },
+    {
+      "id": "NFR5.2",
+      "status": "OK",
+      "target": "Generated untracked .env.compose with mode 0600; secret test with a two-entry exemption; .dockerignore keeps env files out of images"
+    },
+    {
+      "id": "NFR5.4",
+      "status": "OK",
+      "target": "Exact image tags, ARG default read by the test, one PostgreSQL tag shared with the plugin jobs, actions/* only"
+    },
+    {
+      "id": "NFR5.5",
+      "status": "OK",
+      "target": "GUARDRAILS_DEMO_SIGN_IN switch set only in compose.yaml; README risk text; sign-in choices checked in the flows spec"
+    },
+    {
+      "id": "NFR5.7",
+      "status": "OK",
+      "target": "headers-token spec: real token for three demo users, three refusals without a valid token"
+    },
+    {
+      "id": "NFR5.8",
+      "status": "OK",
+      "target": "Allow-list file and check script for packages/e2e, same pattern as u4"
+    },
+    {
+      "id": "NFR5.9",
+      "status": "OK",
+      "target": "Workflow tests: read-only token, no pull_request_target, no push, login or deploy, time limit on every job"
+    },
+    {
+      "id": "NFR1.3",
+      "status": "OK",
+      "target": "Per-job time limits (25 minutes for compose-e2e, 15 elsewhere) and per-step timing output"
+    },
+    {
+      "id": "NFR5.10",
+      "status": "OK",
+      "target": "scanOutputs module searches compose logs, report and traces for the database password and recorded tokens"
+    },
+    {
+      "id": "NFR5.11",
+      "status": "OK",
+      "target": "audit-append-only spec: token-carrying PUT, PATCH, DELETE answered 404 or 405, entry count unchanged"
+    },
+    {
+      "id": "NFR5.12",
+      "status": "OK",
+      "target": "docker compose run --rm --no-deps with the variable emptied: non-zero exit within 60 seconds, output naming guardrails.server.url, never healthy"
+    }
+  ]
+}
