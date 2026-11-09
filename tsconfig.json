@@ -1,7 +1,7 @@
 {
   "extends": "@backstage/cli/config/tsconfig.json",
   "include": ["packages/*/src", "packages/*/config.d.ts"],
-  "exclude": ["node_modules", "packages/plugin-guardrails"],
+  "exclude": ["node_modules", "packages/plugin-guardrails", "packages/app"],
   "compilerOptions": {
     "outDir": "dist-types",
     "rootDir": ".",

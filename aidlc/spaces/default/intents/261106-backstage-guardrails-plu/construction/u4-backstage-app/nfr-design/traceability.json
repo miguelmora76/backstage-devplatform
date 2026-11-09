@@ -1,0 +1,28 @@
+{
+  "stage": "nfr-design",
+  "unit": "u4-backstage-app",
+  "upstream_ids": ["NFR1.1","NFR1.2","NFR1.3","NFR1.4","NFR5.3","NFR5.1","NFR2.3","NFR5.2","NFR5.4","NFR5.5","NFR5.6","NFR5.7","NFR5.8","NFR1.5","NFR1.6","NFR7.1","NFR7.2","NFR7.3","NFR7.4","NFR7.5","NFR7.6"],
+  "coverage": [
+    { "id": "NFR1.1", "status": "OK", "target": "5 s abort on the user list and start call, stale answers dropped (performance-design.md P1, P2)" },
+    { "id": "NFR1.2", "status": "OK", "target": "Working state in the same render plus a ref guard against a second press (performance-design.md P3)" },
+    { "id": "NFR1.3", "status": "OK", "target": "Small committed catalog and lazy routes; 20-load timing by u5 (performance-design.md P5, P6)" },
+    { "id": "NFR1.4", "status": "OK", "target": "No proxy or middleware before the plugin backend (performance-design.md P4)" },
+    { "id": "NFR5.3", "status": "OK", "target": "Token kept in IdentityHolder closure with no getter, storage, log or address (security-design.md S3)" },
+    { "id": "NFR5.1", "status": "OK", "target": "One backendFeatures list with the demo provider as the only sign-in (security-design.md S1)" },
+    { "id": "NFR2.3", "status": "OK", "target": "Entry point and start-up test built from one exported feature list (reliability-design.md R7)" },
+    { "id": "NFR5.2", "status": "OK", "target": "Demo switch from the environment, off by default, 401/404 mapped to signin.off (security-design.md S2)" },
+    { "id": "NFR5.4", "status": "OK", "target": "checkShippedSettings plus source lint for hosts and ports (security-design.md S4)" },
+    { "id": "NFR5.5", "status": "OK", "target": "Text children only, lint bans on raw HTML, content policy setting (security-design.md S5, S9)" },
+    { "id": "NFR5.6", "status": "OK", "target": "CORS for the app's own address only, tested in start-up test or by u5 (security-design.md S6)" },
+    { "id": "NFR5.7", "status": "OK", "target": "One button per listed user, reducer ignores ids outside the list (security-design.md S7)" },
+    { "id": "NFR5.8", "status": "OK", "target": "allowed-packages.txt compared in CI (security-design.md S8)" },
+    { "id": "NFR1.5", "status": "OK", "target": "Stateless app with lint on mutable module state and a shared database (scalability-design.md SC1, SC2)" },
+    { "id": "NFR1.6", "status": "OK", "target": "No scaling target; host-dependent values are settings (scalability-design.md SC3)" },
+    { "id": "NFR7.1", "status": "OK", "target": "Deterministic catalog script checked byte for byte (reliability-design.md R1)" },
+    { "id": "NFR7.2", "status": "OK", "target": "Entry point exits non-zero on a failed start, key named once (reliability-design.md R2, observability-design.md O6)" },
+    { "id": "NFR7.3", "status": "OK", "target": "No start-time dependency on the guardrails server (reliability-design.md R3)" },
+    { "id": "NFR7.4", "status": "OK", "target": "Backstage readiness route answers 200 only after plugin start (reliability-design.md R4)" },
+    { "id": "NFR7.5", "status": "OK", "target": "Total signInState reducer and render test per state (reliability-design.md R5)" },
+    { "id": "NFR7.6", "status": "OK", "target": "Page reads only the list and the committed file; no random or clock text (reliability-design.md R6)" }
+  ]
+}

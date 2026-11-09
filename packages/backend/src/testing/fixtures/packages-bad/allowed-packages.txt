@@ -1,0 +1,2 @@
+# fixture: left-pad is not allowed
+react

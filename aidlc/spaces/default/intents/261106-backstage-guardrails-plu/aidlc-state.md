@@ -69,7 +69,25 @@
 
 
 
-- **Construction Verification Command**: yarn tsc && yarn lint && yarn prettier:check && yarn test --watchAll=false --coverage
+- **Construction Verification Command**: yarn tsc && yarn lint && yarn prettier:check && yarn test --watchAll=false --coverage --testPathIgnorePatterns packages/guardrails-server/src/performance.test.ts && yarn workspace guardrails-server test --watchAll=false src/performance.test.ts
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -170,7 +188,7 @@
 - **Current Stage**: functional-design
 - **Next Stage**: nfr-requirements
 - **Status**: Running
-- **Last Updated**: 2026-11-09T03:33:15Z
+- **Last Updated**: 2026-11-09T11:15:06Z
 
 - **Construction Autonomy Mode**: gated
 

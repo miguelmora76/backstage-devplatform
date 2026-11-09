@@ -1,0 +1,22 @@
+# Packages the app may depend on (NFR5.8, tech-stack-decisions.md).
+# Adding one on purpose means editing this file in the same pull request.
+@backstage/cli
+@backstage/frontend-defaults
+@backstage/frontend-plugin-api
+@backstage/plugin-app
+@backstage/plugin-app-react
+@backstage/plugin-catalog
+@backstage/test-utils
+@material-ui/core
+@testing-library/dom
+@testing-library/jest-dom
+@testing-library/react
+@testing-library/user-event
+@types/jest-axe
+@types/react
+@types/react-dom
+jest-axe
+plugin-guardrails
+react
+react-dom
+react-router-dom

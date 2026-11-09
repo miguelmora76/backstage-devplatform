@@ -26,6 +26,9 @@ aidlc/diagnostics/
 .claude/settings.local.json
 # END AI-DLC:gitignore
 
+# Local settings for yarn start:local (copy .env.example to .env); never committed
+.env
+
 # Node.js workspace: installed packages, build output and coverage output
 node_modules
 dist

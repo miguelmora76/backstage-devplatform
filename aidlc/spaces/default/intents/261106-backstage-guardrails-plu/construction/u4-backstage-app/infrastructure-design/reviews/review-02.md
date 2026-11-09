@@ -1,0 +1,41 @@
+## Review
+
+**Verdict:** READY
+**Reviewer:** aidlc-architecture-reviewer-agent
+**Date:** 2026-11-09T10:36:15Z
+**Iteration:** 2
+**Verdict Dictated:** no
+
+### Findings
+
+| ID | Severity | Location | Finding | Required action | Status |
+|---|---|---|---|---|---|
+| R-01 | Major | aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u4-backstage-app/infrastructure-design/infrastructure-specification.md > Deployment (Compute model, Networking) and Environment Variables (`APP_BASE_URL`, `BACKEND_BASE_URL`, `BACKEND_PORT`) | The document says one backend process serves the built frontend, so the browser reaches one origin, and that this keeps CORS simple. The variable table defaults `APP_BASE_URL` to `http://localhost:3000` and `BACKEND_BASE_URL` to `http://localhost:7007`, which are two origins. `APP_BASE_URL` is also the single CORS origin. In the compose image the browser would be at the backend's address, which is not the CORS origin. `start:local` is said to start "both packages", which implies a separate frontend dev server and contradicts the one-process model. `BACKEND_PORT` and `BACKEND_BASE_URL` can also disagree with no rule tying them together. | State which run modes exist (dev server on two ports, or built frontend served by the backend). For each mode give the values of `APP_BASE_URL`, `BACKEND_BASE_URL` and the CORS origin. Tell u5 and u6 which values to set for the served-frontend image. Say how the port and the base URL are kept consistent. | Resolved (reviewer) |
+| R-02 | Major | aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u4-backstage-app/infrastructure-design/infrastructure-specification.md > Environment Variables (`POSTGRES_*` rows) and Infrastructure Services (PostgreSQL, in-memory SQLite) | The switch between in-memory SQLite and PostgreSQL is described only as "unset means SQLite". Nothing says what sets `backend.database.client`, or how one committed settings file can swap clients, since an unset `${VAR}` substitution fails config loading. `checkShippedSettings` is also required to fail on a missing substitution, which conflicts with variables that are meant to be absent. It is not stated whether u4 ships a separate settings file for PostgreSQL or u5's compose override ships the client setting. This is the hand-off point to u5, and it is not explicit. | Name the mechanism: a client variable, a second committed settings file, or a compose-supplied settings file. State who owns that file (u4 or u5). Say how `checkShippedSettings` treats optional variables. List the variable names u5 must set. | Resolved (reviewer) |
+| R-03 | Major | aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u4-backstage-app/infrastructure-design/cicd-pipeline.md > Build and Test Stages (`app-coverage`, order paragraph) | `app-coverage` is said to report coverage "from `app-unit` and from the catalog and settings tests", but it takes only the coverage output that `app-unit` uploads and does not rerun tests. The catalog and settings tests are not assigned to `app-unit`, and `app-startup`, `app-catalog` and `app-checks` upload no coverage. As written, the 85% gate (D11, team and project rule) is measured on the wrong input set, or the gate cannot be computed. A line-coverage gate that cannot be met or cannot be trusted is the kind of unachievable gate that blocks every pull request or lets a miss through. | Say which job runs which test files (including the settings and catalog tests). Say which jobs upload coverage. Say how `app-coverage` merges the reports. Make sure the merged set matches the "app's own code" scope that the 85% applies to. | Resolved (reviewer) |
+| R-04 | Minor | aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u4-backstage-app/infrastructure-design/infrastructure-specification.md > Environment Variables (`GUARDRAILS_DEMO_SIGN_IN` row) and aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u4-backstage-app/infrastructure-design/cicd-pipeline.md > `app-checks` | `.env.example` ships `GUARDRAILS_DEMO_SIGN_IN=true`, yet the contract (C3) says u4 keeps the shipped default off and u5 turns it on in the compose override. `app-checks` and NFR5.2 both check "default false" and also scan `.env.example`. The switch is set to true by two owners (`.env.example` here, and u5's override). | Say that "default off" is checked on the committed settings file only, and that `.env.example` is local-run guidance. Or ship `false` and document the switch. Make u5 the only owner of the compose-run value. | Resolved (reviewer) |
+| R-05 | Minor | aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u4-backstage-app/infrastructure-design/cicd-pipeline.md > NFR to Infrastructure Mapping (NFR7.2) and aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u4-backstage-app/infrastructure-design/monitoring-design.md > Metrics (Process exit code) | The non-zero exit code on a failed start is relied on by compose (R2), but no CI job checks it. It is "run once in Code Generation and by u5". A later regression would reach `main` unnoticed until u5's run. | Add an exit-code check to `app-startup` (a child process with the setting missing), or record explicitly that the gate is manual. | Resolved (reviewer) |
+| R-06 | Minor | aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u4-backstage-app/infrastructure-design/traceability.json > upstream_ids / coverage | The `app-coverage` gate and the pipeline's own references (NFR2.1, NFR3.1 to NFR3.3 and NFR4.1 as a hand-off) do not appear in the coverage list. Only part of the infrastructure-relevant NFRs are mapped. | Add NFR2.1 (coverage gate) and the hand-off NFRs (NFR3.4, NFR4.1) to the coverage list, or note why they are left out. | Resolved (reviewer) |
+| R-07 | Minor | aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u4-backstage-app/infrastructure-design/infrastructure-specification.md > Environment Variables (`BACKEND_PORT`, `BACKEND_BASE_URL`) | `BACKEND_PORT` (listen port) and `BACKEND_BASE_URL` (published address) are independent variables with defaults that agree only by coincidence (7007). If u5 maps a different host port, the CORS origin and `backend.baseUrl` can drift from the listen port. | Add one sentence: in compose the listen port stays the in-container default and `BACKEND_BASE_URL` carries the published host port, or state that u5 sets both from one value. | New |
+
+> R-01 Reviewer note: The Run Modes row gives the values per mode (dev: two origins; compose: both base URLs equal, `APP_BASE_URL` the single CORS origin) and the Shared Infrastructure row tells u5 and u6 which values to set. How `BACKEND_PORT` and `BACKEND_BASE_URL` stay consistent is still not stated; raised below as a Minor.
+
+> R-02 Reviewer note: Database Selection names the mechanism (two config files, merge order), owner (u4), selector (u5 start command), the five required POSTGRES_* substitutions, and the two-group settings check.
+
+> R-03 Reviewer note: `app-unit` runs all tests except the start-up test and uploads coverage; `app-coverage` reads only that output; `app-catalog` and `app-checks` runs are explicitly not counted. The measured set is consistent.
+
+> R-04 Reviewer note: `.env.example` ships `false`; `start:local --demo` and u5's compose override are the only places that turn it on.
+
+> R-05 Reviewer note: `app-build` has a last step asserting a non-zero exit code and the message; the NFR7.2 mapping row cites it.
+
+> R-06 Reviewer note: The limitation of the traceability sensor is noted, and NFR2.1, NFR3.4 and NFR4.1 are mapped in `cicd-pipeline.md`. I did not re-read `traceability.json` itself.
+
+### Validation Tool Results
+
+| Tool | Result | Interpretation |
+|---|---|---|
+| Manual cross-reference of CI job names, variable list and NFR mapping | Consistent | The seven `app-*` jobs, the variable table, the run modes and the NFR mapping agree with each other. u5 and u6 hand-offs are explicit. |
+
+### Summary
+
+The three Major findings from iteration 1 are resolved: run modes, database switch ownership and the coverage input set are now explicit and consistent. Only a Minor port/base-URL consistency note remains, so the design is implementable.

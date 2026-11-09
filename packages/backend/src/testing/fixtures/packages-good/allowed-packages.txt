@@ -1,0 +1,3 @@
+# fixture: both packages are allowed
+react
+yaml

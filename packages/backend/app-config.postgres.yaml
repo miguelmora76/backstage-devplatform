@@ -1,0 +1,13 @@
+# Added to app-config.yaml when PostgreSQL is used (the compose run of u5):
+#   --config app-config.yaml --config app-config.postgres.yaml
+# All five variables are required here; none has a default and none is a
+# literal. Nothing secret is written in this file.
+backend:
+  database:
+    client: pg
+    connection:
+      host: ${POSTGRES_HOST}
+      port: ${POSTGRES_PORT}
+      database: ${POSTGRES_DB}
+      user: ${POSTGRES_USER}
+      password: ${POSTGRES_PASSWORD}

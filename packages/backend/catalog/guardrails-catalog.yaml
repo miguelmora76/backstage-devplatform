@@ -1,0 +1,102 @@
+# Written by the catalog script (yarn workspace backend catalog:write).
+# Do not edit by hand: a test fails when this file differs from the script output
+# for the default seed.
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: guardrails-demo
+  description: Owner of the synthetic services.
+spec:
+  type: team
+  children: []
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: alex
+spec:
+  profile:
+    displayName: Alex
+  memberOf:
+    - guardrails-demo
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: priya
+spec:
+  profile:
+    displayName: Priya
+  memberOf:
+    - guardrails-demo
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: sam
+spec:
+  profile:
+    displayName: Sam
+  memberOf:
+    - guardrails-demo
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: catalog-portal
+  description: A synthetic service for the guardrails sample.
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:default/guardrails-demo
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: checkout-bridge
+  description: A synthetic service for the guardrails sample.
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:default/guardrails-demo
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: inventory-bridge
+  description: A synthetic service for the guardrails sample.
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:default/guardrails-demo
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: notify-console
+  description: A synthetic service for the guardrails sample.
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:default/guardrails-demo
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: profile-sync
+  description: A synthetic service for the guardrails sample.
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:default/guardrails-demo
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: profile-worker
+  description: A synthetic service for the guardrails sample.
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:default/guardrails-demo
