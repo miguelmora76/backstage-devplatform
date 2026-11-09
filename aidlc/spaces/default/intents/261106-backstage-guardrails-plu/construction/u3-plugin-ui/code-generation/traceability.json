@@ -1,0 +1,560 @@
+{
+  "stage": "code-generation",
+  "unit": "u3-plugin-ui",
+  "upstream_ids": [
+    "AC1.1.1",
+    "AC1.1.2",
+    "AC1.1.3",
+    "AC1.1.4",
+    "AC1.2.1",
+    "AC1.2.2",
+    "AC1.2.3",
+    "AC2.1.1",
+    "AC2.1.2",
+    "AC2.1.3",
+    "AC2.1.4",
+    "AC2.2.1",
+    "AC2.2.2",
+    "AC2.2.3",
+    "AC3.1.1",
+    "AC3.1.2",
+    "AC3.1.3",
+    "AC3.1.4",
+    "AC3.1.5",
+    "AC3.2.1",
+    "AC3.2.2",
+    "AC3.2.3",
+    "AC3.2.4",
+    "AC3.2.5",
+    "AC3.3.1",
+    "AC3.3.2",
+    "AC3.3.3",
+    "AC3.3.4",
+    "AC4.1.1",
+    "AC4.1.2",
+    "AC4.1.3",
+    "AC4.1.4",
+    "AC4.1.6",
+    "AC4.1.5",
+    "AC5.1.1",
+    "AC5.1.3",
+    "AC5.1.2",
+    "AC5.2.1",
+    "AC5.2.2",
+    "AC5.2.4",
+    "AC5.2.3",
+    "NFR1.1",
+    "NFR1.2",
+    "NFR1.3",
+    "NFR1.4",
+    "NFR1.5",
+    "NFR1.6",
+    "NFR1.7",
+    "NFR5.1",
+    "NFR5.10",
+    "NFR5.3",
+    "NFR5.2",
+    "NFR5.4",
+    "NFR5.5",
+    "NFR5.6",
+    "NFR5.7",
+    "NFR5.8",
+    "NFR5.9",
+    "NFR5.11",
+    "NFR5.12",
+    "BR1.1",
+    "BR6.1",
+    "BR6.3",
+    "BR1.2",
+    "BR1.3",
+    "BR1.4",
+    "BR2.1",
+    "BR2.4",
+    "BR2.2",
+    "BR2.3",
+    "BR3.1",
+    "BR3.2",
+    "BR3.3",
+    "BR3.4",
+    "BR3.5",
+    "BR3.6",
+    "BR3.7",
+    "BR3.8",
+    "BR4.1",
+    "BR4.2",
+    "BR4.3",
+    "BR4.4",
+    "BR5.1",
+    "BR5.2",
+    "BR5.4",
+    "BR5.3",
+    "BR6.2",
+    "BR7.1",
+    "BR7.2",
+    "BR7.3",
+    "BR7.4",
+    "BR7.5"
+  ],
+  "coverage": [
+    {
+      "id": "AC1.1.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC1.1.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC1.1.3",
+      "status": "Deferred",
+      "target": "Built and run by u5 against the compose sample in Chrome and Firefox (plan decision: real-browser checks are u5's)"
+    },
+    {
+      "id": "AC1.1.4",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/e2e/accessibility.test.tsx"
+    },
+    {
+      "id": "AC1.2.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC1.2.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC1.2.3",
+      "status": "Deferred",
+      "target": "Built and run by u5 against the compose sample in Chrome and Firefox (plan decision: real-browser checks are u5's)"
+    },
+    {
+      "id": "AC2.1.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC2.1.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC2.1.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC2.1.4",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC2.2.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC2.2.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC2.2.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC3.1.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC3.1.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.test.tsx"
+    },
+    {
+      "id": "AC3.1.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.test.tsx"
+    },
+    {
+      "id": "AC3.1.4",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.test.tsx"
+    },
+    {
+      "id": "AC3.1.5",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/e2e/keyboard.test.tsx"
+    },
+    {
+      "id": "AC3.2.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.test.tsx"
+    },
+    {
+      "id": "AC3.2.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.test.tsx"
+    },
+    {
+      "id": "AC3.2.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.test.tsx"
+    },
+    {
+      "id": "AC3.2.4",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.test.tsx"
+    },
+    {
+      "id": "AC3.2.5",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.test.tsx"
+    },
+    {
+      "id": "AC3.3.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.test.tsx"
+    },
+    {
+      "id": "AC3.3.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.test.tsx"
+    },
+    {
+      "id": "AC3.3.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.test.tsx"
+    },
+    {
+      "id": "AC3.3.4",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.test.tsx"
+    },
+    {
+      "id": "AC4.1.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC4.1.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC4.1.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC4.1.4",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC4.1.6",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC4.1.5",
+      "status": "Deferred",
+      "target": "Built and run by u5 against the compose sample in Chrome and Firefox (plan decision: real-browser checks are u5's)"
+    },
+    {
+      "id": "AC5.1.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC5.1.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/e2e/security.test.tsx"
+    },
+    {
+      "id": "AC5.1.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/e2e/security.test.tsx"
+    },
+    {
+      "id": "AC5.2.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC5.2.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC5.2.4",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "AC5.2.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "NFR1.1",
+      "status": "Deferred",
+      "target": "Built and run by u5 against the compose sample in Chrome and Firefox (plan decision: real-browser checks are u5's)"
+    },
+    {
+      "id": "NFR1.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/e2e/performance.test.tsx"
+    },
+    {
+      "id": "NFR1.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/e2e/performance.test.tsx"
+    },
+    {
+      "id": "NFR1.4",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/e2e/performance.test.tsx"
+    },
+    {
+      "id": "NFR1.5",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/shared.test.tsx"
+    },
+    {
+      "id": "NFR1.6",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/e2e/performance.test.tsx"
+    },
+    {
+      "id": "NFR1.7",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/scripts/check-built.mjs"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.test.tsx"
+    },
+    {
+      "id": "NFR5.10",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/e2e/security.test.tsx"
+    },
+    {
+      "id": "NFR5.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/e2e/security.test.tsx"
+    },
+    {
+      "id": "NFR5.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/e2e/security.test.tsx"
+    },
+    {
+      "id": "NFR5.4",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/e2e/security.test.tsx"
+    },
+    {
+      "id": "NFR5.5",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/e2e/security.test.tsx"
+    },
+    {
+      "id": "NFR5.6",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/e2e/security.test.tsx"
+    },
+    {
+      "id": "NFR5.7",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/shared.test.tsx"
+    },
+    {
+      "id": "NFR5.8",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.test.tsx"
+    },
+    {
+      "id": "NFR5.9",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/api/demoSession.test.ts"
+    },
+    {
+      "id": "NFR5.11",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/scripts/check-built.mjs"
+    },
+    {
+      "id": "NFR5.12",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/scripts/check-packages.mjs"
+    },
+    {
+      "id": "BR1.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/UpgradePlanSection.tsx"
+    },
+    {
+      "id": "BR6.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/ServerErrorPanel.tsx"
+    },
+    {
+      "id": "BR6.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/SectionState.tsx"
+    },
+    {
+      "id": "BR1.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/SectionState.tsx"
+    },
+    {
+      "id": "BR1.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/CiTriageSection.tsx"
+    },
+    {
+      "id": "BR1.4",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/GuardrailsOverviewCard.tsx"
+    },
+    {
+      "id": "BR2.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/UpgradePlanSection.tsx"
+    },
+    {
+      "id": "BR2.4",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.tsx"
+    },
+    {
+      "id": "BR2.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/GuardedButton.tsx"
+    },
+    {
+      "id": "BR2.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/AuditLogSection.tsx"
+    },
+    {
+      "id": "BR3.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/OpenChangesSection.tsx"
+    },
+    {
+      "id": "BR3.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.tsx"
+    },
+    {
+      "id": "BR3.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.tsx"
+    },
+    {
+      "id": "BR3.4",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.tsx"
+    },
+    {
+      "id": "BR3.5",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/ReasonForm.tsx"
+    },
+    {
+      "id": "BR3.6",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/RefusalAlert.tsx"
+    },
+    {
+      "id": "BR3.7",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/DecisionBlock.tsx"
+    },
+    {
+      "id": "BR3.8",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/ChangeDetailScreen.tsx"
+    },
+    {
+      "id": "BR4.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/AuditLogSection.tsx"
+    },
+    {
+      "id": "BR4.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/AuditFilters.tsx"
+    },
+    {
+      "id": "BR4.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/AuditLogSection.tsx"
+    },
+    {
+      "id": "BR4.4",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/PagedTable.tsx"
+    },
+    {
+      "id": "BR5.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/DemoUserSwitch.tsx"
+    },
+    {
+      "id": "BR5.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/api/demoSession.ts"
+    },
+    {
+      "id": "BR5.4",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/DemoUserSwitch.tsx"
+    },
+    {
+      "id": "BR5.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/api/guardrailsApi.ts"
+    },
+    {
+      "id": "BR6.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/screens/GuardrailsView.tsx"
+    },
+    {
+      "id": "BR7.1",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/SectionFrame.tsx"
+    },
+    {
+      "id": "BR7.2",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/ResultBanner.tsx"
+    },
+    {
+      "id": "BR7.3",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/components/ReasonField.tsx"
+    },
+    {
+      "id": "BR7.4",
+      "status": "OK",
+      "target": "packages/plugin-guardrails/src/hooks/useSection.ts"
+    },
+    {
+      "id": "BR7.5",
+      "status": "Deferred",
+      "target": "Built and run by u5 against the compose sample in Chrome and Firefox (plan decision: real-browser checks are u5's) (layout at 1280 px and 400% zoom)"
+    }
+  ]
+}

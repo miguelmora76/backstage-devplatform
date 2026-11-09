@@ -1,0 +1,46 @@
+{
+  "stage": "code-generation",
+  "unit": "u3-plugin-ui",
+  "version": 1,
+  "writes": [
+    {
+      "path": "packages/plugin-guardrails/src/"
+    },
+    {
+      "path": "packages/plugin-guardrails/scripts/"
+    },
+    {
+      "path": "packages/plugin-guardrails/.eslintrc.js"
+    },
+    {
+      "path": "packages/plugin-guardrails/allowed-packages.txt"
+    },
+    {
+      "path": "packages/plugin-guardrails/package.json"
+    },
+    {
+      "path": "packages/plugin-guardrails/README.md"
+    },
+    {
+      "path": "packages/plugin-guardrails/tsconfig.build.json"
+    },
+    {
+      "path": "packages/plugin-guardrails/tsconfig.json"
+    },
+    {
+      "path": ".github/workflows/ci.yml"
+    },
+    {
+      "path": "yarn.lock"
+    },
+    {
+      "path": "packages/plugin-guardrails/jestGlobalSetup.js"
+    },
+    {
+      "path": "package.json"
+    },
+    {
+      "path": "tsconfig.json"
+    }
+  ]
+}

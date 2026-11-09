@@ -11,7 +11,7 @@
     ]
   },
   "scripts": {
-    "tsc": "tsc",
+    "tsc": "tsc && tsc -p packages/plugin-guardrails",
     "tsc:full": "tsc --skipLibCheck false --incremental false",
     "test": "backstage-cli repo test",
     "lint": "backstage-cli repo lint",

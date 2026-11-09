@@ -1,0 +1,22 @@
+# Packages the plugin may depend on (NFR5.12, tech-stack-decisions.md).
+# Adding one on purpose means editing this file in the same pull request.
+@backstage/cli
+@backstage/frontend-plugin-api
+@backstage/plugin-catalog-react
+@backstage/test-utils
+@material-ui/core
+@material-ui/lab
+@testing-library/dom
+@testing-library/jest-dom
+@testing-library/react
+@testing-library/user-event
+@types/jest-axe
+@types/react
+@types/react-dom
+jest-axe
+msw
+react
+react-dom
+react-router
+react-router-dom
+yaml

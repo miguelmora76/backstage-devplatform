@@ -1,0 +1,284 @@
+{
+  "stage": "functional-design",
+  "unit": "u3-plugin-ui",
+  "upstream_ids": [
+    "AC1.1.1",
+    "AC1.1.2",
+    "AC1.1.3",
+    "AC1.1.4",
+    "AC1.2.1",
+    "AC1.2.2",
+    "AC1.2.3",
+    "AC2.1.1",
+    "AC2.1.2",
+    "AC2.1.3",
+    "AC2.1.4",
+    "AC2.2.1",
+    "AC2.2.2",
+    "AC2.2.3",
+    "AC3.1.1",
+    "AC3.1.2",
+    "AC3.1.3",
+    "AC3.1.4",
+    "AC3.1.5",
+    "AC3.2.1",
+    "AC3.2.2",
+    "AC3.2.3",
+    "AC3.2.4",
+    "AC3.2.5",
+    "AC3.3.1",
+    "AC3.3.2",
+    "AC3.3.3",
+    "AC3.3.4",
+    "AC4.1.1",
+    "AC4.1.2",
+    "AC4.1.3",
+    "AC4.1.4",
+    "AC4.1.6",
+    "AC4.1.5",
+    "AC5.1.1",
+    "AC5.1.3",
+    "AC5.1.2",
+    "AC5.2.1",
+    "AC5.2.2",
+    "AC5.2.4",
+    "AC5.2.3"
+  ],
+  "coverage": [
+    {
+      "id": "AC1.1.1",
+      "status": "OK",
+      "target": "BR1.1"
+    },
+    {
+      "id": "AC1.1.2",
+      "status": "OK",
+      "target": "BR1.2"
+    },
+    {
+      "id": "AC1.1.3",
+      "status": "OK",
+      "target": "BR7.4",
+      "note": "Display part (parallel loads, BR7.4) here; the 20-load 95th percentile of 5 seconds is measured by u5 on the compose sample."
+    },
+    {
+      "id": "AC1.1.4",
+      "status": "OK",
+      "target": "BR7.1, BR7.2",
+      "note": "Structure and labelling here (BR7.1, BR7.2); the automated scan in a simulated browser is in u3 tests, the real-browser scan is u5."
+    },
+    {
+      "id": "AC1.2.1",
+      "status": "OK",
+      "target": "BR1.3"
+    },
+    {
+      "id": "AC1.2.2",
+      "status": "OK",
+      "target": "BR1.2"
+    },
+    {
+      "id": "AC1.2.3",
+      "status": "OK",
+      "target": "BR7.1, BR7.4",
+      "note": "Display part (parallel loads, BR7.4) here; the 20-load 95th percentile of 5 seconds is measured by u5 on the compose sample."
+    },
+    {
+      "id": "AC2.1.1",
+      "status": "OK",
+      "target": "BR2.1"
+    },
+    {
+      "id": "AC2.1.2",
+      "status": "OK",
+      "target": "BR2.2"
+    },
+    {
+      "id": "AC2.1.3",
+      "status": "OK",
+      "target": "BR2.3"
+    },
+    {
+      "id": "AC2.1.4",
+      "status": "OK",
+      "target": "BR2.4"
+    },
+    {
+      "id": "AC2.2.1",
+      "status": "OK",
+      "target": "BR2.1"
+    },
+    {
+      "id": "AC2.2.2",
+      "status": "OK",
+      "target": "BR2.2"
+    },
+    {
+      "id": "AC2.2.3",
+      "status": "OK",
+      "target": "BR2.3, BR2.4"
+    },
+    {
+      "id": "AC3.1.1",
+      "status": "OK",
+      "target": "BR3.1"
+    },
+    {
+      "id": "AC3.1.2",
+      "status": "OK",
+      "target": "BR3.3"
+    },
+    {
+      "id": "AC3.1.3",
+      "status": "OK",
+      "target": "BR3.4"
+    },
+    {
+      "id": "AC3.1.4",
+      "status": "OK",
+      "target": "BR3.2"
+    },
+    {
+      "id": "AC3.1.5",
+      "status": "OK",
+      "target": "BR7.1, BR7.2, BR7.3"
+    },
+    {
+      "id": "AC3.2.1",
+      "status": "OK",
+      "target": "BR3.5"
+    },
+    {
+      "id": "AC3.2.2",
+      "status": "OK",
+      "target": "BR3.6",
+      "note": "Owned by u2 (the backend refuses a direct call and writes the entry); this unit covers only the display of the refusal (BR3.6)."
+    },
+    {
+      "id": "AC3.2.3",
+      "status": "OK",
+      "target": "BR3.6"
+    },
+    {
+      "id": "AC3.2.4",
+      "status": "OK",
+      "target": "BR3.5, BR3.6"
+    },
+    {
+      "id": "AC3.2.5",
+      "status": "OK",
+      "target": "BR3.2",
+      "note": "Owned by u2 (server-side limits); this unit covers only the reason box checks (BR3.2)."
+    },
+    {
+      "id": "AC3.3.1",
+      "status": "OK",
+      "target": "BR3.3"
+    },
+    {
+      "id": "AC3.3.2",
+      "status": "OK",
+      "target": "BR3.7"
+    },
+    {
+      "id": "AC3.3.3",
+      "status": "OK",
+      "target": "BR3.7"
+    },
+    {
+      "id": "AC3.3.4",
+      "status": "OK",
+      "target": "BR3.2, BR3.6"
+    },
+    {
+      "id": "AC4.1.1",
+      "status": "OK",
+      "target": "BR4.1"
+    },
+    {
+      "id": "AC4.1.2",
+      "status": "OK",
+      "target": "BR4.2"
+    },
+    {
+      "id": "AC4.1.3",
+      "status": "OK",
+      "target": "BR4.3"
+    },
+    {
+      "id": "AC4.1.4",
+      "status": "OK",
+      "target": "BR1.2"
+    },
+    {
+      "id": "AC4.1.6",
+      "status": "OK",
+      "target": "BR4.4",
+      "note": "Deviation: the AC says pages of 20 by default; D3 uses 10 per page (the mockup), requested with pageSize=10."
+    },
+    {
+      "id": "AC4.1.5",
+      "status": "OK",
+      "target": "BR7.1, BR7.4",
+      "note": "Display part (parallel loads, BR7.4) here; the 20-load 95th percentile of 5 seconds is measured by u5 on the compose sample."
+    },
+    {
+      "id": "AC5.1.1",
+      "status": "OK",
+      "target": "BR5.1, BR5.2"
+    },
+    {
+      "id": "AC5.1.3",
+      "status": "OK",
+      "target": "BR5.3",
+      "note": "Owned by u2 (identity from the credential); this unit covers only that no call carries identity fields (BR5.3)."
+    },
+    {
+      "id": "AC5.1.2",
+      "status": "OK",
+      "target": "BR5.3"
+    },
+    {
+      "id": "AC5.2.1",
+      "status": "OK",
+      "target": "BR6.1"
+    },
+    {
+      "id": "AC5.2.2",
+      "status": "OK",
+      "target": "BR6.2"
+    },
+    {
+      "id": "AC5.2.4",
+      "status": "OK",
+      "target": "BR6.3"
+    },
+    {
+      "id": "AC5.2.3",
+      "status": "OK",
+      "target": "BR6.1"
+    }
+  ],
+  "reverse": [
+    {
+      "id": "BR1.4",
+      "status": "N/A",
+      "target": "overview card counts, from Screen A of the refined mockups (US1.1, US1.2 entry point)"
+    },
+    {
+      "id": "BR3.8",
+      "status": "N/A",
+      "target": "lost connection during a submit, from flow 10 of the refined mockups (FR11.2)"
+    },
+    {
+      "id": "BR5.4",
+      "status": "N/A",
+      "target": "behavior after a user switch, from the refined mockups header (FR5.1)"
+    },
+    {
+      "id": "BR7.5",
+      "status": "N/A",
+      "target": "layout and browsers, from NFR4 and the interaction spec"
+    }
+  ]
+}

@@ -24,6 +24,8 @@ env:
   PACKAGE: packages/guardrails-server
   PLUGIN: packages/plugin-guardrails-backend
   PLUGIN_NAME: plugin-guardrails-backend
+  UI: packages/plugin-guardrails
+  UI_NAME: plugin-guardrails
 
 jobs:
   # Stage 1: Prettier check over all code (NFR6.1). Any difference fails.
@@ -50,6 +52,9 @@ jobs:
       - run: yarn install --frozen-lockfile
       - run: yarn --cwd ${{ env.PACKAGE }} backstage-cli package lint
       - run: yarn --cwd ${{ env.PLUGIN }} backstage-cli package lint
+      # u3-plugin-ui: the same lint, plus its rules that forbid raw-HTML
+      # insertion, fetch and storage outside the API and session, and ports.
+      - run: yarn --cwd ${{ env.UI }} backstage-cli package lint
 
   # Stage 3: TypeScript compile without output. Any error fails.
   typecheck:
@@ -63,6 +68,7 @@ jobs:
       - run: yarn install --frozen-lockfile
       - run: yarn tsc -p ${{ env.PACKAGE }}
       - run: yarn tsc -p ${{ env.PLUGIN }}
+      - run: yarn tsc -p ${{ env.UI }}
 
   # Stage 4: all unit tests (including the 200-call benchmark, the 10-call
   # concurrency test, the log-line test and the settings tests) with the
@@ -279,3 +285,91 @@ jobs:
           cache: yarn
       - run: yarn install --frozen-lockfile
       - run: yarn workspace ${{ env.PLUGIN_NAME }} build
+
+  # ---- u3-plugin-ui: jobs for plugin-guardrails (the browser plugin) ----
+
+  # All plugin tests in a simulated browser with the time zone and clock
+  # pinned (NFR7.1), run once with the coverage report. The 85% line threshold
+  # is in the package settings and is never lowered. Any failing test fails.
+  ui-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn workspace ${{ env.UI_NAME }} test --coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-coverage
+          path: ${{ env.UI }}/coverage
+          if-no-files-found: ignore
+
+  # Reads the coverage report that ui-unit produced (it does not run the tests
+  # again) and fails below 85% line coverage.
+  ui-coverage:
+    needs: ui-unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-coverage
+          path: ui-coverage
+      - name: Check line coverage is at least 85%
+        run: |
+          node -e "
+            const s = require('./ui-coverage/coverage-summary.json');
+            const pct = s.total.lines.pct;
+            console.log('line coverage: ' + pct + '%');
+            if (pct < 85) { console.error('below 85%'); process.exit(1); }
+          "
+
+  # Contract check: the stand-in backend is compared with c1-openapi.yaml of
+  # u2, and the sign-in start answer is checked against u2's own module.
+  ui-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn workspace ${{ env.UI_NAME }} contract:check
+
+  # Builds the plugin and keeps its output for ui-checks. The app package that
+  # includes the plugin belongs to u4-backstage-app; its build is added to this
+  # job when it exists.
+  ui-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn workspace ${{ env.UI_NAME }} build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ui-dist
+          path: ${{ env.UI }}/dist
+
+  # On the built plugin: no host name or address in the code, at most 300 KB
+  # compressed (NFR1.7, NFR5.11), and only allowed packages in the manifest
+  # (NFR5.12).
+  ui-checks:
+    needs: ui-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-dist
+          path: ${{ env.UI }}/dist
+      - run: node ${{ env.UI }}/scripts/check-packages.mjs
+      - run: node ${{ env.UI }}/scripts/check-built.mjs

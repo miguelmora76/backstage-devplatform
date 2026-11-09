@@ -94,7 +94,7 @@ The demo-user switch sits in the header of Screens B and C (see below).
 | ---------------------------------------------------------------- |
 | Date/time     Actor Action        Service       Target Outcome Reason|
 | Nov 6 10:42   Priya Approve       payments-api  lib-a  Applied Safe  |
-| Nov 6 10:40   Sam   Propose upgrade payments-api lib-a Proposed -   |
+| Nov 6 10:40   Sam   Propose         payments-api lib-a Proposed -   |
 |                              [ Previous ]  Page 1 of 3  [ Next ]  |
 +------------------------------------------------------------------+
 ```
@@ -104,7 +104,7 @@ The demo-user switch sits in the header of Screens B and C (see below).
 - Duplicate proposals are allowed, so two rows can name the same dependency (FR1.2).
 - **Paging and order** (Q13: A): the audit log is newest first and shows date and time. The audit log, the upgrade plan and the CI triage list each show 10 rows per page with Previous and Next controls and "Page N of M". Row buttons have names that include the row ("Propose change for lib-a", "View change: Upgrade lib-a to 2.0").
 - **Status component:** `[i] Proposed` is a custom label (an info icon plus the word); the others use Backstage status icons (see `design-system-mapping.md`).
-- **Audit log** (Q8: A, P2, P3): shows this service only; the Service column is shown on every entry. The Action column values are: Propose upgrade, Propose re-run, Approve, Reject, Retry. The Outcome values are: Proposed, Applied, Rejected, Failed, Refused. Every propose, approve, reject, retry and refused attempt writes an entry. The Reason column holds the approver's reason as submitted, or "-" for a proposal.
+- **Audit log** (Q8: A, P2, P3): shows this service only; the Service column is shown on every entry. The Action column values are: Propose, Approve, Reject, Retry (changed during Code Generation of u3: the audit entry from the plugin backend (C1) names the action `propose` without the kind of change, so one word covers both; the change title in the open list tells an upgrade from a re-run). The Outcome values are: Proposed, Applied, Rejected, Failed, Refused. Every propose, approve, reject, retry and refused attempt writes an entry. The Reason column holds the approver's reason as submitted, or "-" for a proposal.
 - Banner: a result banner appears after propose, and after a return from Screen C (Q4: B).
 - Accessibility: h1 is the service name; h2 for each of the four sections; landmarks header and main; the banner takes focus (see `accessibility-checklist.md`).
 
