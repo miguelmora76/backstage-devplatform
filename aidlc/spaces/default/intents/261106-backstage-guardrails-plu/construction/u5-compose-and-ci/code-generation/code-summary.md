@@ -37,7 +37,7 @@
 
 1. **Image size target raised from 500 MB to 550 MB (person-approved).** The `app-image` job now measures the image's file system with `docker run --user 0 ... du -sxm /` (the same on every Docker image store) and fails above 550 MB. Current value: 537 MB. The Dockerfile comment and the design notes (`security-design.md`, `tech-stack-decisions.md`, `monitoring-design.md`, `cicd-pipeline.md`) now say 550 MB with the approval noted; reviews and earlier traceability files are left as they were. No other threshold changed.
 2. **Approved edit to u4 (catalog list accessibility).** Backstage's catalog list failed axe `nested-interactive` (drag handle button inside the sort-label button) and had unnamed comboboxes and tables. Added `packages/app/src/a11y/catalogA11y.ts` (repairs, with tests), `CatalogA11yFix.tsx` (a root element that keeps the repairs applied via a MutationObserver on added nodes, with a test) and registered it in the existing `signInModule` (`packages/app/src/signInModule.tsx`, so the app still has exactly three features). Effect: the drag handle leaves the button role and the tab order (column drag by keyboard is gone; sorting is unchanged), each filter combobox gets the name of its label, the list table is named "Catalog entries" and the paging table "Catalog paging". u4's 42 app tests pass (coverage 97.6%), lint and tsc pass.
-3. **Firefox crash in axe: left as is.** The Playwright Firefox build used here (1.65.0, macOS arm64) crashes the page inside axe's `nested-interactive` rule on the service overview, changes list and audit log. Unverified on Linux CI. The `a11y` spec skips and annotates (`known-environment-issue`) only that exact crash in Firefox; a violation, or the crash in Chrome, still fails. Chrome checks are untouched.
+3. **Firefox crash in axe: left as is.** The Playwright Firefox build used here (1.65.0, macOS arm64) crashes the page inside axe's `nested-interactive` rule on the service overview, changes list and audit log. **Confirmed on Linux CI** (PR #5 run 42664310250: the same three Firefox screens skip there), so it is not specific to macOS. The `a11y` spec skips and annotates (`known-environment-issue`) only that exact crash in Firefox; a violation, or the crash in Chrome, still fails. Chrome checks are untouched.
 
 ## Final results
 
@@ -47,7 +47,15 @@
 
 ## Open items
 
-1. Firefox axe crash on three screens: unverified on Linux CI (see above).
+1. Firefox axe crash on three screens: confirmed on Linux CI and macOS; skipped and annotated in the spec, Chrome checks run in full.
 2. u2: `plugin-guardrails-backend` has no `publishConfig` (the image patches `main`).
 3. Not checkable here: screen-reader pass (NFR3.4), GitHub status and the `ci-ok` branch-protection setting (NFR2.5), a failing pull request showing a failed status, the workflows on GitHub.
 4. Margin of the size check is 13 MB (537 of 550).
+
+## Fix after PR #5 (compose-e2e failed on Linux CI)
+
+- Symptom: the Firefox flow failed at the retry set-up, `priya.decide(..., 'approve')` while the guardrails server was stopped returned a body without `status`.
+- Cause: the plugin backend reuses a server health result for 5 seconds (`serverHealth.ts`, BR7.1) and refuses a decision with 503 SERVER_UNREACHABLE when the fresh probe fails; the change then stays pending and there is no `status`. The spec relied on the cached "reachable" result from the proposal still being valid after `docker stop --timeout 5`. On the Mac the stop was quick enough; on the runner the stop plus the earlier steps took longer than 5 seconds. (Inferred from the code and the log; not reproduced on Linux.)
+- Fix, in u5's spec code only: the flow now reads the plan just before the server is ended (refreshes the cached result to reachable), ends it with `docker compose kill` (immediate; new `killService` in `specs/support/stack.ts`, `stopService` removed), then approves, so the apply call reaches the dead server and the change fails (FR3.6). The assertion message now prints the HTTP status and body.
+- Ordering: `firefox` now depends on `http` (it ran as test 11, before the http project, because it had no dependency). It still has no dependency on `chrome` (so a Chrome failure does not hide Firefox results); with one worker the config order runs Chrome first and the two never overlap.
+- Local rerun after a reset: `yarn e2e` 37 passed, 3 skipped (Firefox axe crash), checks passed; e2e unit tests 125 passed, 97.52% lines; lint, tsc, prettier pass.

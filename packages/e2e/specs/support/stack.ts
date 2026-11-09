@@ -17,8 +17,14 @@ function docker(extra: string[]) {
   return result.stdout;
 }
 
-export function stopService(service: string): void {
-  docker(['stop', '--timeout', '5', service]);
+/**
+ * Ends the container at once (SIGKILL), not after a grace period. The plugin
+ * backend reuses a health probe result for 5 seconds, so a slow stop would let
+ * the cached "reachable" result expire and the approval would be refused with
+ * 503 instead of failing the change (the case on the Linux runner).
+ */
+export function killService(service: string): void {
+  docker(['kill', service]);
 }
 
 export async function startService(service: string): Promise<void> {

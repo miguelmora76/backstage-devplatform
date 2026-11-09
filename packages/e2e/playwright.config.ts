@@ -49,6 +49,9 @@ export default defineConfig({
     {
       name: 'firefox',
       testMatch: browserSpecs,
+      // After the http project, and (config order) after Chrome, so the two
+      // browsers never overlap on stopping the guardrails server.
+      dependencies: ['http'],
       use: { ...devices['Desktop Firefox'], viewport },
     },
     {

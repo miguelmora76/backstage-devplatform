@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { client, signIn } from './support/api';
 import { seededDependencies, seededFailedRuns } from './support/seed';
-import { startService, stopService } from './support/stack';
+import { killService, startService } from './support/stack';
 import { openService, switchUser } from './support/ui';
 
 // NFR4.1: the flows of FR1 to FR4 in Chrome and Firefox: view the plan,
@@ -77,15 +77,22 @@ test('the whole flow of plan, proposals, decisions, retry and audit', async ({
     seededDependencies(service).find(d => d.name === second)!.dependencyKey,
   );
   expect(proposed.status).toBe(201);
-  stopService('guardrails-server');
+  const priya = client(request, await signIn(request, 'priya'));
+  // A read just before the kill refreshes the plugin's 5-second health result
+  // to "reachable"; the approval then reaches the dead server and the change
+  // fails (FR3.6). Without a fresh result the approval is refused with 503.
+  expect((await priya.plan(service)).status).toBe(200);
+  killService('guardrails-server');
   try {
-    const priya = client(request, await signIn(request, 'priya'));
     const failed = await priya.decide(
       proposed.body.changeId,
       'approve',
       'server is down',
     );
-    expect(failed.body?.status).toBe('failed');
+    expect(
+      failed.body?.status,
+      `approve while the server is down: HTTP ${failed.status}, body ${JSON.stringify(failed.body)}`,
+    ).toBe('failed');
   } finally {
     await startService('guardrails-server');
   }
@@ -106,7 +113,6 @@ test('the whole flow of plan, proposals, decisions, retry and audit', async ({
   for (let i = 0; i < 8; i += 1) {
     const p = await sam.propose(service, 'upgrade', target);
     expect(p.status).toBe(201);
-    const priya = client(request, await signIn(request, 'priya'));
     await priya.decide(p.body.changeId, 'reject', `round ${i}`);
   }
   await switchUser(page, 'sam');
