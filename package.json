@@ -21,6 +21,8 @@
     "compose:up": "node packages/e2e/bin/compose-up.mjs",
     "compose:down": "node packages/e2e/bin/compose-down.mjs",
     "compose:reset": "node packages/e2e/bin/compose-reset.mjs",
+    "minikube:up": "node packages/e2e/bin/minikube-up.mjs",
+    "minikube:down": "node packages/e2e/bin/minikube-down.mjs",
     "e2e": "node packages/e2e/bin/e2e.mjs",
     "e2e:timing": "node packages/e2e/bin/e2e-timing.mjs"
   },

@@ -1,0 +1,39 @@
+## Review
+
+**Verdict:** READY
+**Reviewer:** aidlc-architecture-reviewer-agent
+**Date:** 2026-11-09T23:25:11Z
+**Iteration:** 2
+**Verdict Dictated:** no
+
+### Findings
+
+| ID | Severity | Location | Finding | Required action | Status |
+|---|---|---|---|---|---|
+| R-01 | Critical | aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u6-minikube-run/nfr-requirements/tech-stack-decisions.md > NFR2.24 (and security-requirements.md > NFR5.20) | The documents say the live job runs the u5 end-to-end specs "unchanged" and that "u6 adds no new switch to the specs" (NFR2.24), and that the specs "are not copied" (NFR5.20). The repo contradicts this. `packages/e2e/specs/flows.spec.ts` imports `containerId`, `killContainer` and `startService` from `packages/e2e/specs/support/stack.ts`. That file runs `docker compose --project-name guardrails-sample --env-file .env.compose ps/start` through `composeArgs`, and `docker kill <container id>`. On minikube there is no compose project and no `.env.compose`, so `containerId('guardrails-server')` throws "No running container". The pods also run inside the minikube node (Docker driver), where a host `docker kill` cannot reach them. The Deployment would restart a killed pod on its own, unlike compose (`restart: 'no'`). The server-down failed-change flow therefore cannot pass on a cluster. Because Q3: B makes this job blocking, the job cannot go green as specified. | Decide and write down how the server-down flow works on minikube. For example, give `support/stack.ts` a cluster backend (`kubectl scale deployment ... --replicas=0/1`, or delete the pod and wait for ready) chosen by an environment variable. Then restate NFR2.24 and NFR5.20 to say that one small switch is added to `packages/e2e`, and add its unit tests to the 85% floor (NFR2.18). Also say how the pod-restart timing keeps the plugin's 5-second probe-reuse window (HEALTH_TTL_MS) meaningful. | Resolved (reviewer) |
+| R-02 | Major | aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u6-minikube-run/nfr-requirements/tech-stack-decisions.md > NFR2.21 and NFR2.33 | Both rows say the file tests are added to "the existing `compose-files` job". `.github/workflows/ci.yml` has no job named `compose-files`. Its jobs are `app-image`, `compose-e2e`, `e2e-unit`, `ci-ok` and others. The compose-file tests run in `e2e-unit` (`yarn workspace e2e test`). A test that asserts a job name or `needs` list from these documents would fail, or would silently check nothing. | Replace `compose-files` with `e2e-unit`, which really runs the `packages/e2e` unit tests. Check NFR2.33 too, and make the new job's `needs` (`app-image`) and its entry in `ci-ok` match the real names. | Resolved (reviewer) |
+| R-03 | Major | aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u6-minikube-run/nfr-requirements/tech-stack-decisions.md > NFR1.5 (Q3: B "timing reported, not blocking") | The documents require the live job to run `yarn e2e:timing` and not fail on the 95th percentile. `packages/e2e/specs/timing.spec.ts` hard-asserts `expect(p95).toBeLessThanOrEqual(LIMIT_MS)` with a fixed `LIMIT_MS = 5000`. The row also says the specs get no new switch (NFR2.24). So the timing step will fail the job on a slow runner, which is the exact noise the person's Q3 answer meant to exclude. No mechanism is named for "report only". | Name the mechanism. For example, run the timing step with `continue-on-error: true` and read its JSON report, or add a "report only" environment variable to `timing.spec.ts` (this counts as a spec change under NFR2.24). State which one, and write a pass condition for it: the numbers file exists and is uploaded, and the step cannot fail the job. | Resolved (reviewer) |
+| R-04 | Minor | aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u6-minikube-run/nfr-requirements/security-requirements.md > NFR5.15 | The pod-rights test lists `runAsUser`, the read-only root and the writable set. It does not mention `fsGroup` or the data-directory ownership. PostgreSQL runs as uid 70 with a read-only root, using a PVC from minikube's default storage class. The app writes into an `emptyDir` static directory where compose used `tmpfs ... uid=1000,mode=0755`. Ownership of both volumes is not specified, so the pods may fail to start. | Add a pass condition for volume ownership (`fsGroup` or `runAsGroup` set, plus a PGDATA subdirectory if needed). Cover it in the live-job startup check. | Resolved (reviewer) |
+| R-05 | Minor | aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u6-minikube-run/nfr-requirements/tech-stack-decisions.md > NFR1.7 and NFR2.20 | The 25-minute budget is stated as an estimate with a 30-minute limit. It leaves only 5 minutes of margin, and the cluster server-restart flow (see the Critical finding) adds time. Also, `/healthz` is called "the server's probe route", yet it is an `exec` probe (`node packages/guardrails-server/dist/probe/healthcheck.js`) in compose. The probe type is not fixed for the pods. | Say the server probe is an `exec` of that script (or an `httpGet` of `/healthz`). Leave a margin in the budget, or set the limit from a measured run. | Resolved (reviewer) |
+| R-06 | Minor | aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u6-minikube-run/nfr-requirements/tech-stack-decisions.md > NFR2.24 | Scaling the Deployment to zero ends the pod with a SIGTERM and a grace period, not an immediate kill like `docker kill`. The end may fall outside the 5-second probe-reuse window, and the only fallback is to adjust the spec's wait. | At Code Generation, prefer a fast end (for example `terminationGracePeriodSeconds` of 0 or 1 on the server pod, or deleting the pod with a zero grace period) and record the measured time. | New |
+| R-07 | Minor | aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/u6-minikube-run/nfr-requirements/tech-stack-decisions.md > NFR2.24 | The text repeats itself: "The flows in Chrome and Firefox: the flows in Chrome and Firefox, ...". | Remove the duplicated phrase. | New |
+
+> R-01 Reviewer note: NFR2.24 now adds an `E2E_STACK` switch (`compose` default, `minikube` in the live job). The server-down flow is done with `kubectl` scale-to-zero and back in `guardrails-sample`. The command construction sits in a module under `src/`, so it is unit tested inside the 85% floor (NFR2.18). Code Generation measures the end time against the 5-second probe-reuse window. The stale "specs unchanged" claim is rewritten in NFR2.24 and the Hand-offs section.
+
+> R-02 Reviewer note: NFR2.21 and NFR2.33 now say the file tests run in the `e2e-unit` job. `ci.yml` has `e2e-unit` (line 547), `app-image` (570) and `ci-ok` (639).
+
+> R-03 Reviewer note: NFR1.5 adds `E2E_TIMING_BLOCKING` (default `true`, `false` on minikube) with a unit test of the switch reader. This matches `timing.spec.ts`, which today hard-codes `LIMIT_MS = 5000`.
+
+> R-04 Reviewer note: NFR5.15 now sets `fsGroup` to the container user on every pod with a PostgreSQL claim or an `emptyDir`, and a test asserts it.
+
+> R-05 Reviewer note: NFR1.7 sets the limit to 35 minutes against a 25-minute estimate, with a revise-in-the-open rule. NFR2.20 fixes the server probe as an exec running `healthcheck.js`, as in compose.
+
+### Validation Tool Results
+
+| Tool | Result | Interpretation |
+|---|---|---|
+| Manual cross-check of `ci.yml` job names and of `stack.ts` and `timing.spec.ts` against the NFR text | PASS | The `e2e-unit`, `app-image` and `ci-ok` jobs exist, and the two switches address the real hard-coded behavior. |
+
+### Summary
+
+All five prior findings are fixed, and the documents now match the repository. Only two minor points remain: the pod termination grace period for the server-down flow, and a duplicated sentence in NFR2.24.

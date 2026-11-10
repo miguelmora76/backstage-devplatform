@@ -1,0 +1,13 @@
+# Kustomize base of the minikube run of the guardrails sample (u6-minikube-run).
+# Applied by `yarn minikube:up` with `kubectl apply -k k8s/`. The namespace and
+# the database Secret are created by the start script, not by this base, so it
+# holds only namespaced objects and no secret (NFR5.14, NFR5.16).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: guardrails-sample
+resources:
+  - configmap.yaml
+  - serviceaccounts.yaml
+  - postgres.yaml
+  - guardrails-server.yaml
+  - app.yaml

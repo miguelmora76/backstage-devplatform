@@ -1,0 +1,42 @@
+{
+  "stage": "nfr-requirements",
+  "unit": "u6-minikube-run",
+  "upstream_ids": ["NFR1", "NFR2", "NFR3", "NFR4", "NFR5", "NFR6", "NFR7"],
+  "coverage": [
+    {
+      "id": "NFR1",
+      "status": "OK",
+      "target": "NFR1.5, NFR1.6, NFR1.7, NFR1.8"
+    },
+    {
+      "id": "NFR2",
+      "status": "OK",
+      "target": "NFR2.18, NFR2.19, NFR2.20, NFR2.21, NFR2.22, NFR2.23, NFR2.24, NFR2.25, NFR2.26, NFR2.27, NFR2.28, NFR2.29, NFR2.30, NFR2.31, NFR2.32, NFR2.33, NFR2.34"
+    },
+    {
+      "id": "NFR3",
+      "status": "OK",
+      "target": "NFR3.5, NFR2.24"
+    },
+    {
+      "id": "NFR4",
+      "status": "OK",
+      "target": "NFR4.3, NFR2.24"
+    },
+    {
+      "id": "NFR5",
+      "status": "OK",
+      "target": "NFR5.13, NFR5.14, NFR5.15, NFR5.16, NFR5.17, NFR5.18, NFR5.19, NFR5.20, NFR5.21, NFR5.22"
+    },
+    {
+      "id": "NFR6",
+      "status": "OK",
+      "target": "NFR6.2"
+    },
+    {
+      "id": "NFR7",
+      "status": "OK",
+      "target": "NFR7.3, NFR7.4"
+    }
+  ]
+}

@@ -34,7 +34,7 @@ The project is built from six units of work. Each unit has its own design record
 | u3   | `packages/plugin-guardrails`                    | The Backstage frontend plugin: overview card, Guardrails tab, change detail, demo-user switch                   |
 | u4   | `packages/app`, `packages/backend`              | The host Backstage app: loads both plugins, the demo sign-in page, the catalog of the seeded services, settings |
 | u5   | compose files and the CI workflow (in progress) | Runs the whole sample with docker compose, the real-browser checks and the shared CI workflow                   |
-| u6   | Kubernetes run files (optional, not started)    | Runs the sample on minikube                                                                                     |
+| u6   | `k8s/` and the minikube scripts                 | Runs the sample on a local minikube cluster, with the same end-to-end check as compose                          |
 
 This README was started in u4, the first unit where the whole application runs. It is kept in step with the code: a unit that changes how the project is run updates it in the same change.
 
@@ -230,6 +230,7 @@ packages/
     src/startup.test.ts             the start-up test
     scripts/                        check-packages, check-exit, start-local
     allowed-packages.txt            the packages the backend may depend on
+k8s/                            u6  Kustomize base of the minikube run (one file per concern)
 .env.example                    names and safe local values for the settings
 .github/workflows/ci.yml        the shared CI workflow
 aidlc/                          the design record of every unit (requirements, designs, reviews)
@@ -271,7 +272,7 @@ The full text is in `aidlc/spaces/default/intents/261106-backstage-guardrails-pl
 
 ## Status of the units
 
-u1, u2 and u3 are built and merged. u4 (this unit) adds the app, the catalog, the settings, the CI jobs and this README. u5 will add the compose files, the real-browser checks and the rest of the CI workflow, and extend this README with the compose run; u6 (minikube) is optional and not started.
+u1, u2 and u3 are built and merged. u4 (this unit) adds the app, the catalog, the settings, the CI jobs and this README. u5 will add the compose files, the real-browser checks and the rest of the CI workflow, and extend this README with the compose run; u6 adds the minikube run (see [Run on minikube](#run-on-minikube)) and one more CI job.
 
 ## Run everything with docker compose
 
@@ -340,3 +341,96 @@ Chrome is the stable channel installed on the machine or runner and moves on its
 | `did not become healthy within 180 seconds`                       | Read the printed service logs; a crash shows because nothing restarts by itself     |
 | The page shows the sign-in again after a reload                   | By design: the sign-in is held in memory only                                       |
 | Port 7007 is already in use                                       | Stop `yarn start:local` or whatever uses it; the compose run needs `127.0.0.1:7007` |
+
+## Run on minikube
+
+Added by unit u6. This is the optional second way to run the sample: the same three parts (the app, the guardrails server and PostgreSQL) as Kubernetes workloads on a local [minikube](https://minikube.sigs.k8s.io/) cluster. It adds no application behavior; it proves that the same end-to-end check as the compose run passes on a cluster. Nothing is pushed anywhere, no registry is used, and the only cluster the commands will ever touch is the local `minikube` one.
+
+### What you need
+
+| Tool                                               | Version it was tested with                       | Notes                                              |
+| -------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------- |
+| Docker (running)                                   | any current release                              | minikube uses it as its driver (`--driver=docker`) |
+| [minikube](https://minikube.sigs.k8s.io/)          | v1.39.0 in CI (an older v1.36.0 also works here) | `minikube version`                                 |
+| [kubectl](https://kubernetes.io/docs/tasks/tools/) | v1.37.2 in CI (v1.33.1 also works here)          | within one minor version of the cluster            |
+| Node 22 or later and Yarn                          | as for the rest of the project                   | `yarn install` once                                |
+
+The cluster needs about 4 GB of memory and 2 CPUs. `yarn minikube:up` starts it for you with `minikube start --driver=docker --cpus=2 --memory=4096`; if a `minikube` cluster already exists it is reused as it is (minikube cannot change the memory or CPUs of an existing cluster; run `minikube delete` first if it is too small).
+
+### The two commands
+
+```bash
+yarn install
+yarn minikube:up      # starts the cluster if needed, builds the images, applies k8s/, waits until ready, opens the port
+yarn minikube:down    # closes the port and removes the sample (its namespace); the cluster stays
+```
+
+Then open <http://localhost:7007> and choose a demo user. `minikube:up` does everything itself, in this order, and prints the time of each phase:
+
+1. Checks that Docker, minikube and kubectl are installed, and says which one is missing.
+2. Starts the `minikube` cluster if it is not running, and **refuses to go on unless kubectl points at the `minikube` context** (see below).
+3. Builds the two images inside the cluster with `minikube image build` from the same build files as compose (`packages/backend/Dockerfile`, `packages/guardrails-server/Dockerfile`), so nothing is pulled or pushed. If the build inside the cluster fails (the frontend build can run out of memory in a 4 GB node), it says so in one line and builds with your Docker instead, then loads the image into the cluster. It prints the app image size and stops above 550 MB.
+4. Creates the namespace `guardrails-sample` and the database Secret `guardrails-db` (a random 32-character password, sent to `kubectl` on standard input, so it is in no file, no command line and no log), then applies `k8s/`.
+5. Waits up to 300 seconds for PostgreSQL, the guardrails server and the app to be ready. On a failure it prints `kubectl get pods,svc,pvc`, the description of the pods and each pod's log, and exits with a non-zero code.
+6. Starts `kubectl port-forward` bound to `127.0.0.1:7007`, remembers its process id in `.minikube-forward.pid` (untracked), waits for the app's readiness route to answer through it and prints the address.
+
+Running `minikube:up` again is safe: the images are layer-cached, `apply` is repeatable, the Secret and the database claim are kept (so the login and the data stay), and the port-forward is restarted.
+
+`minikube:down` stops the port-forward (only after checking that the process in the file really is a `kubectl port-forward` for this sample, so a recycled process id is never killed) and deletes the namespace. **Everything in the namespace is gone afterwards: the database data, the claim and the Secret.** The minikube cluster itself is left running; stop it with `minikube stop` or remove it with `minikube delete` when you no longer need it. If `minikube:up` finds the database claim but not the Secret (a new password could not open the old data), it stops and tells you to run `yarn minikube:down`.
+
+### What is in `k8s/`
+
+A plain Kustomize base, applied with `kubectl apply -k k8s/`. Each file starts with a comment that lists the rules it follows; every rule is a unit test (`packages/e2e/src/k8sCheck.test.ts`), so a change that breaks one fails the pull request.
+
+| File                     | What it holds                                                                                                   |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `kustomization.yaml`     | Sets the namespace and lists the files. It holds no Secret and no Namespace object                              |
+| `configmap.yaml`         | The settings, with the same names as the environment of the compose `app` service                               |
+| `serviceaccounts.yaml`   | One service account per workload, no role binding, no token mounted                                             |
+| `postgres.yaml`          | StatefulSet with a 1 GiB claim, and a ClusterIP service                                                         |
+| `guardrails-server.yaml` | Deployment and ClusterIP service; writes nothing to disk                                                        |
+| `app.yaml`               | Deployment and ClusterIP service; two init containers make it start only after PostgreSQL and the server answer |
+
+Every container runs as a non-root user, with all capabilities dropped, no privilege escalation, a read-only root file system and the default seccomp profile; the writable places are the same short list as in compose (`/tmp`, the frontend static directory and, for PostgreSQL, its data and socket directory). Probes use the same timings as compose's health checks. Nothing is exposed: all three services are `ClusterIP`, and there is no Ingress, NodePort or LoadBalancer. The only way in from your machine is the port-forward on `127.0.0.1:7007`.
+
+### Safety: only the local cluster
+
+Every `kubectl` call of the scripts and of the end-to-end checks carries `--context minikube`, and `minikube:up` and `minikube:down` first check that `kubectl config current-context` is exactly `minikube` and that the `minikube` cluster is running. A shell left on another cluster (a hosted one, for example) is refused with a message that names the context and says nothing was changed; it can never receive the manifests or the namespace delete.
+
+### The demo sign-in risk in the minikube run
+
+As in the compose run, the passwordless demo sign-in is switched on (`GUARDRAILS_DEMO_SIGN_IN: 'true'`, set only in `k8s/configmap.yaml`): anyone who can open the page can become any of the three demo users. That is acceptable only because the port is reachable on the loopback address only and the data is invented. The pods can open outbound connections (compose's closed `internal` network has no equal here, because minikube's default network cannot enforce a network policy, and a policy that is not enforced would only look like protection).
+
+### Before any hosted use
+
+`k8s/` is written so that a hosted overlay can be added later without editing it. That overlay must at least change: the image names and `imagePullPolicy: Never` (use a registry and exact tags or digests), the storage class of the claim, the demo sign-in setting (replace the provider), how the database password is created and kept (a secret store, not a script), and add network policies, an Ingress with TLS and resource policies suited to the cluster.
+
+### The end-to-end checks on minikube
+
+With the sample up (start from `yarn minikube:down` and `yarn minikube:up` so the tables are empty):
+
+```bash
+yarn workspace e2e playwright install chrome firefox     # once
+E2E_STACK=minikube yarn e2e specs                        # the same specs as compose, through the port-forward
+yarn e2e minikube-checks                                 # port answers on 127.0.0.1 only, images, no pod restarts, no password or token in pod logs or the report
+E2E_STACK=minikube E2E_TIMING_BLOCKING=false yarn e2e:timing   # 20 loads of each view; reported here, not enforced
+```
+
+`E2E_STACK` tells the one flow that stops the guardrails server how to do it (`kubectl scale` to 0 and back on minikube; the default, compose, is unchanged). `E2E_TIMING_BLOCKING` is `true` unless it is exactly `false`, so a typo cannot switch the compose limit off; the 5-second limit is enforced in the compose job and only reported on minikube. After `minikube:down`, `yarn e2e minikube-closed` checks that port 7007 is closed.
+
+The CI job `minikube-e2e` does all of this on every pull request (35-minute limit): it installs minikube and kubectl at exact versions checked against their published SHA-256 values, starts a cluster, runs the steps above, starts the sample a second time from nothing and requires the same upgrade plan, byte for byte, and always stops the sample. It is part of the `ci-ok` status.
+
+The screen-reader checklist above is about the same application and is not repeated for minikube.
+
+### Troubleshooting the minikube run
+
+| Symptom                                                     | Cause and fix                                                                                                                                                           |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Docker`, `minikube` or `kubectl` `is not installed`        | Install the one named and make sure it is on the PATH                                                                                                                   |
+| `kubectl points at the context "..." , not "minikube"`      | Your shell is on another cluster. Run `kubectl config use-context minikube` and try again; nothing was changed                                                          |
+| `Port 7007 on this machine is already in use`               | Stop `yarn start:local`, `yarn compose:down` or whatever uses it. A forward left by an earlier run is stopped by `yarn minikube:down`                                   |
+| `... did not become ready within 300 seconds`               | Read the status, descriptions and logs printed above the message. A pod that cannot pull `...:local` means the image build did not finish: run `yarn minikube:up` again |
+| The image build is killed or the node runs out of memory    | The script falls back to building with your Docker; if that also fails, free memory or run `minikube delete` so the next start creates the cluster with 4096 MB         |
+| `The database claim ... exists but the Secret ... does not` | Run `yarn minikube:down`, then `yarn minikube:up`; the sample data is deleted                                                                                           |
+| The page stops answering after a while                      | A port-forward ends when its pod ends. Run `yarn minikube:up` again, which starts a new one                                                                             |
+| `E2E_STACK is "..."`                                        | Use `minikube`, or leave it unset for the compose run                                                                                                                   |

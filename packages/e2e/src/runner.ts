@@ -15,6 +15,8 @@ export interface RunOptions {
   inherit?: boolean;
   /** Stop the command after this many milliseconds (reported as an error). */
   timeoutMs?: number;
+  /** Written to the child's standard input (never put a secret in an argument). */
+  input?: string;
 }
 
 /** Every docker call goes through one function so tests can replace it. */
@@ -32,6 +34,7 @@ export const realRunner: Runner = (command, args, options = {}) => {
     stdio: options.inherit ? 'inherit' : 'pipe',
     maxBuffer: 64 * 1024 * 1024,
     timeout: options.timeoutMs,
+    input: options.input,
   });
   return {
     status: result.status,
