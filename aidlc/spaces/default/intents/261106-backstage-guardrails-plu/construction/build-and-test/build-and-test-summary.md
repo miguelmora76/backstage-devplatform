@@ -8,7 +8,7 @@ Sources: the `nfr-requirements/` and `nfr-design/` artifacts of u1 to u6, every 
 |---|---|
 | Does it build? | Yes. `yarn tsc`, `yarn lint`, `yarn prettier:check` exit 0; the pipeline's build jobs for every package passed on `main` |
 | Do the tests pass? | Yes. 92 suites and 1,022 tests pass across the project (94.25% line coverage); the live browser checks passed in the pipeline (compose) and on the person's machine (minikube) |
-| Is every measurable target verified? | No. Nine targets are `Unverified`; see the matrix. They need a person (screen reader, repository setting) or a run that has not happened yet (minikube timing, stop check, second fresh start, pipeline job) |
+| Is every measurable target verified? | No. Four targets are `Unverified`; see the matrix. All four need a person: a screen-reader pass (u3, u4, u5) and the merge-blocking repository setting (u5) |
 | Result of the stage | **Not successful yet**: the failure predicate is met because applicable targets are `Unverified`. The approval gate carries this to the person |
 
 ## Evidence Key
@@ -18,6 +18,7 @@ Sources: the `nfr-requirements/` and `nfr-design/` artifacts of u1 to u6, every 
 | CI:`<job>` | GitHub Actions run 42717839586 on `main` at `9cbd241` (the merge of u5, 2026-11-09): all 27 jobs `success`, including `compose-e2e` (7 min 36 s) and `ci-ok`. The named job is the one that runs the check |
 | FC | This stage's project check at the u6 checkpoint (2026-11-10): `yarn tsc && yarn lint && yarn prettier:check && yarn test … --coverage … && yarn workspace guardrails-server test … src/performance.test.ts`, exit 0; 92 suites passed, 1,022 tests passed, 12 skipped; lines 94.25%; the server benchmark gives p95 of 0.004 to 0.009 ms in the handlers and 0.57 to 1.43 ms over HTTP |
 | E2E | `yarn workspace e2e test --watchAll=false --coverage` (this session): 28 suites, 312 tests, lines 97.27% |
+| CI:PR-run | GitHub Actions run 42763792290 on the u6 branch at `c9658b8` (PR #6, 2026-11-10): all jobs `success`, including `minikube-e2e` (20 min 50 s: 38 passed, 2 skipped in the browser specs; exposure, image, restart and log scans passed twice; the two fresh starts gave the same plan byte for byte; port 7007 closed after the stop), `compose-e2e` and `ci-ok`. An earlier run of the same PR failed (`minikube-e2e`: the Secret was created through `/dev/stdin` and failed; `plugin-rules`: a timing flake at 1.64 s against 1.2 s; `compose-e2e`: the accessibility scan caught a loading spinner); the Secret call was fixed in `c9658b8` and the other two passed on the new run |
 | PR | The person's report of the live minikube run (2026-11-10): `yarn compose:down`, `yarn minikube:up`, `E2E_STACK=minikube yarn e2e specs` (40 tests: 37 passed, 3 skipped), `yarn e2e minikube-checks`, `yarn minikube:down`. The first three are output the person pasted; the other two are the person's statement that the commands worked, with no output |
 
 ## How the Verdicts Were Reached
@@ -161,9 +162,9 @@ Technology-choice rows (language, framework, packaging, workspace and similar "N
 | u5/NFR6.1 | u5 nfr-requirements | Lint and format of u5 files | jobs green | CI:lint, CI:format, CI:typecheck | build-and-test | Met |
 | u5/NFR7.1 | u5 nfr-requirements | Same data every run | repeatability passes | CI:compose-e2e | build-and-test | Met |
 | u5/NFR7.2 | u5 nfr-requirements | Tables empty after reset | passes | CI:compose-e2e | build-and-test | Met |
-| u6/NFR1.5 | u6 nfr-requirements | Minikube timing reported (not blocking) | the timing command was not run on minikube | none | build-and-test | Unverified |
-| u6/NFR1.6 | u6 nfr-requirements | Start bounded (300 s) and fails clearly | `minikube:up` succeeded; its duration was not reported; the failure output is unit-tested | PR (no time); E2E | build-and-test | Unverified |
-| u6/NFR1.7 | u6 nfr-requirements | Live pipeline job bounded (35 min) | the `minikube-e2e` job has never run on GitHub (branch not pushed) | none | build-and-test | Unverified |
+| u6/NFR1.5 | u6 nfr-requirements | Minikube timing reported (not blocking) | reported: p95 of 20 loads 582 ms (sign-in), 1,628 ms (catalog list), 1,397 ms (service overview), 843 ms (changes list), 926 ms (change detail), 1,019 ms (audit log); the step does not block | CI:PR-run `minikube-e2e` step 14 | build-and-test | Met |
+| u6/NFR1.6 | u6 nfr-requirements | Start bounded (300 s) and fails clearly | rollout 161 s on a cold start (second start 15 s); failure output unit-tested | CI:PR-run `minikube-e2e` step 8, E2E | build-and-test | Met |
+| u6/NFR1.7 | u6 nfr-requirements | Live pipeline job bounded (35 min) | the job took 20 min 50 s (images 323 s, rollout 161 s, specs 1.9 min, second start 15 s, timing 2.2 min) | CI:PR-run `minikube-e2e` | build-and-test | Met |
 | u6/NFR1.8 | u6 nfr-requirements | Images ≤ 550 MB | app image 537 MB (developer's local build); `minikube-checks` ran | PR, code-summary | build-and-test | Met |
 | u6/NFR2.18 | u6 nfr-requirements | Tests first; ≥85% lines | 97.27%; 14 Red records | E2E, u6 code-summary | build-and-test | Met |
 | u6/NFR2.19 | u6 nfr-requirements | One command starts the sample on minikube | `yarn minikube:up` worked; specs passed through the forward | PR | build-and-test | Met |
@@ -175,7 +176,7 @@ Technology-choice rows (language, framework, packaging, workspace and similar "N
 | u6/NFR3.5 | u6 nfr-requirements | Accessibility not re-opened | scans pass on minikube | PR | build-and-test | Met |
 | u6/NFR4.3 | u6 nfr-requirements | Same browser support | Chrome and Firefox ran | PR | build-and-test | Met |
 | u6/NFR6.2 | u6 nfr-requirements | Lint and format of u6 files | exit 0 | FC | build-and-test | Met |
-| u6/NFR7.3 | u6 nfr-requirements | Same data every time and as compose, incl. a second fresh start | first-start repeatability passes; the second-fresh-start comparison was not run | PR (partial) | build-and-test | Unverified |
+| u6/NFR7.3 | u6 nfr-requirements | Same data every time and as compose, incl. a second fresh start | repeatability passes; "The two fresh starts gave the same plan, byte for byte" (2,253 bytes) | CI:PR-run `minikube-e2e` steps 9 and 13, PR | build-and-test | Met |
 | u6/NFR7.4 | u6 nfr-requirements | Tables empty after a fresh start | repeatability spec passes | PR | build-and-test | Met |
 | u6/NFR5.13 | u6 nfr-requirements | Only the loopback port-forward is a way in | manifest rules pass; `minikube-checks` includes the non-loopback refusal | E2E, PR (statement only) | build-and-test | Met |
 | u6/NFR5.14 | u6 nfr-requirements | No secret in argument/log/file | Secret via stdin unit-tested; `minikube-checks` includes the pod-log scan | E2E, PR (statement only) | build-and-test | Met |
@@ -186,7 +187,7 @@ Technology-choice rows (language, framework, packaging, workspace and similar "N
 | u6/NFR5.19 | u6 nfr-requirements | Demo sign-in on only here; README says so | manifest rule passes; README section present | E2E | build-and-test | Met |
 | u6/NFR5.20 | u6 nfr-requirements | Origin, CSP, token step, append-only audit on the same image | header, token and audit specs passed on minikube | PR | build-and-test | Met |
 | u6/NFR5.21 | u6 nfr-requirements | Pipeline job read-only | workflow tests pass | E2E | build-and-test | Met |
-| u6/NFR5.22 | u6 nfr-requirements | A stop leaves nothing exposed | `down` ran; the closed-port check (`yarn e2e minikube-closed`) was not run | PR (partial) | build-and-test | Unverified |
+| u6/NFR5.22 | u6 nfr-requirements | A stop leaves nothing exposed | after the stop: "Port 7007 is closed on 127.0.0.1" | CI:PR-run `minikube-e2e` step 18 | build-and-test | Met |
 | u6/NFR5.12 | u6 nfr-requirements | Missing server address stops the app (u5's check covers it) | covered by u5/NFR5.12 | CI:compose-e2e | build-and-test | N/A (covered by u5) |
 | CI obligation | Testing Contract | Run the selected tests in CI before merge | set up by the CI Pipeline stage, later in this plan | — | ci-pipeline | N/A (CI Pipeline, later in this plan, sets up CI to run these tests before merge) |
 
@@ -202,8 +203,8 @@ Technology-choice rows (language, framework, packaging, workspace and similar "N
 
 | Item | Detail |
 |---|---|
-| Nine targets are `Unverified` | u3/NFR3.4, u4/NFR3.4 and u5/NFR3.4 (one screen-reader pass by a person); u5/NFR2.5 (turn on the required `ci-ok` status in branch protection, and show a failing PR once); u6/NFR1.5, NFR1.6, NFR7.3 and NFR5.22 (run `E2E_TIMING_BLOCKING=false yarn e2e:timing`, time `yarn minikube:up`, run the second-fresh-start comparison and `yarn e2e minikube-closed`); u6/NFR1.7 (the `minikube-e2e` job runs only after the branch is pushed) |
+| Four targets are `Unverified` | u3/NFR3.4, u4/NFR3.4 and u5/NFR3.4 (one screen-reader pass by a person with VoiceOver or NVDA); u5/NFR2.5 (turn on the required `ci-ok` status in the repository's branch protection, which GitHub reports as off, and show a failing PR once). The five minikube targets that were open are now `Met` on the PR's pipeline run |
 | Firefox accessibility scan | Three screens are skipped on macOS arm64 by the known crash of the pinned Firefox build; the Linux pipeline run is the evidence for those screens |
-| Evidence for two minikube checks is the person's statement | `yarn e2e minikube-checks` and `yarn minikube:down` were reported as working without output |
+| The `minikube-e2e` job has run once successfully (after one failed run) | The first run's failures were a Secret-creation bug (fixed), a timing flake in `plugin-rules` and an accessibility scan that caught a loading spinner in `compose-e2e` (the last two passed on re-run, but are not understood to be fixed; watch for them) |
 | The cross-unit report flags NFR1 | u3's NFR1.1 was deliberately handed to u5 (Deferred); u5/NFR1.1 is `Met`. See `cross-unit-traceability.md` |
 | Review findings left open at the u6 checkpoint | Missing FR9.1 and NFR2.18 to NFR2.23 rows in u6's `traceability.json`; Windows is not supported by the Secret path (`/dev/stdin`); an offline machine with no non-loopback address fails `minikube-checks`. The person approved u6 with these accepted |

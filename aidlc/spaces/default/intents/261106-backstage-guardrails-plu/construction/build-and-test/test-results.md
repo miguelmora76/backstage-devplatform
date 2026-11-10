@@ -38,7 +38,8 @@ No threshold was lowered. The jest warnings about `coverageThreshold` in per-pro
 | `E2E_STACK=minikube yarn e2e specs` (minikube, through the port-forward) | the person's machine, 2026-11-10, output pasted | 40 tests: **37 passed, 3 skipped, 0 failed**, 55.7 s. The 3 skipped are `[firefox]` accessibility scans of the service overview, changes list and audit log: the known crash of the pinned Firefox build on macOS arm64, which the spec skips and annotates; Chrome ran all six screens |
 | Within that run: flow of plan, proposals, decisions, retry and audit with the server stopped and restarted through `kubectl` (Chrome and Firefox) | same | passed |
 | `yarn compose:down`, `yarn minikube:up`, `yarn e2e minikube-checks`, `yarn minikube:down` | the person's machine | reported as working; no output was provided |
-| Not run: `E2E_TIMING_BLOCKING=false yarn e2e:timing` on minikube, the second-fresh-start plan comparison, `yarn e2e minikube-closed`, the `minikube-e2e` pipeline job | — | see the `Unverified` rows of the matrix |
+| Pipeline job `minikube-e2e` on PR #6, run 42763792290 at `c9658b8` (cluster started with the Docker runtime) | GitHub Actions | `success`, 20 min 50 s: first fresh start (images 323 s, rollout 161 s), flows and security specs (38 passed, 2 skipped: the known Firefox crash), exposure, image, restart and log scans (passed twice), second fresh start (same plan byte for byte, 2,253 bytes), timing (reported, not blocking: p95 582 to 1,628 ms), stop, port 7007 closed |
+| The first `minikube-e2e` run on PR #6 (run 42761244399 at `2c698b8`) | GitHub Actions | failed at the first start: "Could not read the size of guardrails-app:local" (the cluster ran containerd, which has no `docker`); fixed in `a06c8e2` (`--container-runtime=docker`). The next run then failed creating the Secret through `/dev/stdin`; fixed in `c9658b8` (manifest on standard input, `kubectl create -f -`) |
 
 ## Browser Evidence
 
@@ -46,4 +47,4 @@ Behavior in a browser is reported as tested only where a real engine ran it: Chr
 
 ## Failures
 
-None in the commands that were run. The failure predicate is nevertheless met because nine applicable targets are `Unverified` (see the summary). They are not failed commands: they need a person's action or a run that has not happened yet.
+None in the commands that were run for this assessment. The pipeline runs of PR #6 had failures that were fixed or passed on re-run (listed above; two were flakes: a 1.64 s timing in `plugin-rules` against a 1.2 s limit, and an accessibility scan of the catalog list that caught a loading spinner). The failure predicate is nevertheless met because four applicable targets are `Unverified` (see the summary): a screen-reader pass for u3, u4 and u5, and the merge-blocking repository setting for u5. They are not failed commands: they need a person's action.

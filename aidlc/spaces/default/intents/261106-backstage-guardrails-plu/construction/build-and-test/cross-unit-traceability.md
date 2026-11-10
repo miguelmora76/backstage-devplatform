@@ -46,4 +46,4 @@ So the requirement is met by u5's check. The tool cannot see a deferral as cover
 ## Findings Surfaced at the Gate
 
 1. NFR1 is flagged by the tool (explained above; no code gap).
-2. Nine targets are `Unverified` in the summary (screen-reader pass ×3 units, the merge-blocking repository setting, and five u6 live checks).
+2. Four targets are `Unverified` in the summary (the screen-reader pass for u3, u4 and u5, and the merge-blocking repository setting for u5). The u6 live checks that were open are `Met` on the pipeline run of PR #6.
