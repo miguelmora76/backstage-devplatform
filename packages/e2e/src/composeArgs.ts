@@ -2,6 +2,8 @@ import { CommandResult, RunOptions, Runner } from './runner';
 
 export const PROJECT_NAME = 'guardrails-sample';
 export const ENV_FILE = '.env.compose';
+/** The value of E2E_STACK for the compose run (the default); see stackControl.ts. */
+export const COMPOSE_STACK = 'compose';
 
 const FORBIDDEN = new Set(['-p', '--project-name', '--env-file']);
 

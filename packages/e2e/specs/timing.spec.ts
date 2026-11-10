@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { percentile } from '../src/percentile';
+import { timingBlocking } from '../src/timingSwitch';
 import { waitForHealthyStack } from './support/healthy';
 import { prepareChanges, views } from './support/screens';
 
@@ -51,6 +52,14 @@ test('the 95th percentile of 20 loads of each view is at most 5 seconds', async 
     ),
   );
   info.annotations.push({ type: 'browser', description: browser.version() });
+  // Only this last assertion is switched (NFR1.5): E2E_TIMING_BLOCKING=false
+  // (the minikube job) still measures, prints and writes every p95 above.
+  if (!timingBlocking(process.env.E2E_TIMING_BLOCKING)) {
+    console.log(
+      'E2E_TIMING_BLOCKING=false: the limit is reported, not enforced',
+    );
+    return;
+  }
   for (const [name, { p95 }] of Object.entries(report)) {
     expect(p95, `${name} p95`).toBeLessThanOrEqual(LIMIT_MS);
   }

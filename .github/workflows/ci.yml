@@ -604,12 +604,21 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: yarn
       - run: yarn install --frozen-lockfile
+      # The runner supplies Chrome and the browser system libraries. Install
+      # only Playwright's patched Firefox, before starting the sample. Retrying
+      # --with-deps is unsafe: a timed-out sudo apt-get can keep the dpkg lock.
+      - name: Install Playwright Firefox
+        timeout-minutes: 14
+        run: |
+          for attempt in 1 2 3; do
+            time timeout --kill-after=30s 240s yarn workspace ${{ env.E2E_NAME }} playwright install firefox && exit 0
+            echo "Firefox install attempt ${attempt} failed or timed out"
+          done
+          exit 1
       - name: Start the sample from a reset
         run: |
           time yarn compose:reset
           time yarn compose:up
-      - name: Install Chrome and Firefox
-        run: time yarn workspace ${{ env.E2E_NAME }} playwright install --with-deps chrome firefox
       - name: Flows, accessibility, keyboard, tree, headers, token, audit and repeatability
         run: time yarn e2e specs
       - name: Timing (20 loads of each view, Chrome)
@@ -628,6 +637,107 @@ jobs:
         if: always()
         with:
           name: e2e-report
+          path: |
+            ${{ env.E2E }}/dist/out
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ---- u6-minikube-run: the same check on a local minikube cluster ----
+
+  # Starts minikube in the job (Docker driver, 2 CPUs, 4096 MB; it is gone when
+  # the job ends), builds the two images into it, applies k8s/, and runs the
+  # u5 end-to-end specs unchanged against the port-forward on 127.0.0.1:7007
+  # (FR9.1: the same check as the compose run). Then: exposure, image,
+  # restart and output checks; a second fresh start whose upgrade plan must
+  # equal the first byte for byte; the timing run, which is reported here and
+  # does not block (E2E_TIMING_BLOCKING=false; it blocks in compose-e2e).
+  # Nothing is pushed or published and no secret is used: minikube and kubectl
+  # are downloaded at exact versions and checked against the SHA-256 values the
+  # projects publish with each release, written here when the version was
+  # chosen (never fetched at run time). Each step prints its time (NFR1.7).
+  minikube-e2e:
+    needs: app-image
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      # The runner supplies Chrome and the browser system libraries. Install
+      # only Playwright's patched Firefox, before starting minikube. Retrying
+      # --with-deps is unsafe: a timed-out sudo apt-get can keep the dpkg lock.
+      - name: Install Playwright Firefox
+        timeout-minutes: 14
+        run: |
+          for attempt in 1 2 3; do
+            time timeout --kill-after=30s 240s yarn workspace ${{ env.E2E_NAME }} playwright install firefox && exit 0
+            echo "Firefox install attempt ${attempt} failed or timed out"
+          done
+          exit 1
+      # minikube v1.39.0; digest from
+      # https://github.com/kubernetes/minikube/releases/download/v1.39.0/minikube-linux-amd64.sha256
+      - name: Install minikube v1.39.0 (checked against its published SHA-256)
+        run: |
+          curl -fsSL -o "${RUNNER_TEMP}/minikube" https://github.com/kubernetes/minikube/releases/download/v1.39.0/minikube-linux-amd64
+          echo "b738496da01be06bbaf80c688f57ce25acd3849fbb518155f3a88e03ef555aa4  ${RUNNER_TEMP}/minikube" | sha256sum -c -
+          sudo install "${RUNNER_TEMP}/minikube" /usr/local/bin/minikube
+          minikube version
+      # kubectl v1.37.2; digest from https://dl.k8s.io/release/v1.37.2/bin/linux/amd64/kubectl.sha256
+      - name: Install kubectl v1.37.2 (checked against its published SHA-256)
+        run: |
+          curl -fsSL -o "${RUNNER_TEMP}/kubectl" https://dl.k8s.io/release/v1.37.2/bin/linux/amd64/kubectl
+          echo "c04487523e7aa7d1493f7808174c899db93d7a9cf57531420cd76b9bd415f8f4  ${RUNNER_TEMP}/kubectl" | sha256sum -c -
+          sudo install "${RUNNER_TEMP}/kubectl" /usr/local/bin/kubectl
+          kubectl version --client
+      - name: Start the minikube cluster
+        # The runner has 4 CPUs and 16 GB. The cluster shares them with the
+        # browsers, so it gets more headroom here than the 2 CPUs and 4 GB the
+        # script asks for on a laptop: a slow answer from the guardrails server
+        # makes the plugin report it unreachable for 5 seconds, and a view loaded
+        # in that window shows an error.
+        run: time minikube start --driver=docker --container-runtime=docker --cpus=4 --memory=8192
+      - name: First fresh start of the sample
+        run: |
+          time yarn minikube:down
+          time yarn minikube:up
+      - name: Save the upgrade plan of one service
+        run: yarn e2e plan-snapshot ${{ env.E2E }}/dist/out/plan-first.json
+      - name: Flows, accessibility, keyboard, tree, headers, token, audit and repeatability
+        run: time E2E_STACK=minikube yarn e2e specs
+      - name: Exposure, images, restarts and output scan
+        run: time yarn e2e minikube-checks
+      - name: Second fresh start and the same plan, byte for byte
+        run: |
+          time yarn minikube:down
+          time yarn minikube:up
+          yarn e2e plan-snapshot ${{ env.E2E }}/dist/out/plan-second.json
+          yarn e2e plan-compare ${{ env.E2E }}/dist/out/plan-first.json ${{ env.E2E }}/dist/out/plan-second.json
+      - name: Timing (20 loads of each view, Chrome; reported, not blocking)
+        run: time E2E_STACK=minikube E2E_TIMING_BLOCKING=false yarn e2e:timing
+      - name: Exposure, images, restarts and output scan after the timing run
+        run: time yarn e2e minikube-checks
+      - name: Status, descriptions and logs of every pod on failure
+        if: failure()
+        run: |
+          kubectl --context minikube -n guardrails-sample get pods,svc,pvc
+          kubectl --context minikube -n guardrails-sample describe pods
+          for pod in $(kubectl --context minikube -n guardrails-sample get pods -o name); do
+            echo "--- log of ${pod}"
+            kubectl --context minikube -n guardrails-sample logs "${pod}" --all-containers=true --tail=200
+          done
+      - name: Stop the sample
+        if: always()
+        run: yarn minikube:down
+      - name: Port 7007 is closed after the stop
+        if: always()
+        run: yarn e2e minikube-closed
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: minikube-e2e-report
           path: |
             ${{ env.E2E }}/dist/out
           retention-days: 7
@@ -664,6 +774,7 @@ jobs:
       - e2e-unit
       - app-image
       - compose-e2e
+      - minikube-e2e
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

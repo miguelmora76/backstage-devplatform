@@ -1,0 +1,193 @@
+# The app of the minikube run (u6-minikube-run): the Backstage backend serving
+# the built frontend, as a Deployment of one replica and a ClusterIP service.
+# The browser reaches it only through `kubectl port-forward` bound to
+# 127.0.0.1:7007, started by `yarn minikube:up` (NFR5.13). The image is built
+# with `minikube image build` from packages/backend/Dockerfile and is never
+# pulled or pushed (NFR5.18).
+#
+# Rules this file follows (each is a unit test in packages/e2e, src/k8sCheck.ts):
+# - user 1000, no capabilities, no privilege escalation, read-only root file
+#   system; the writable mounts are /tmp and the frontend static directory,
+#   because the app backend plugin rewrites the frontend files at start to
+#   inject settings (NFR5.15). fsGroup 1000 makes both emptyDir volumes
+#   writable by that user. The image's own start command copies the pristine
+#   static files into the static directory, then starts the backend;
+# - settings from the ConfigMap, the database password from the Secret
+#   guardrails-db only (NFR2.27, NFR5.14);
+# - two init containers, in order, so the app starts only after PostgreSQL and
+#   the guardrails server answer (NFR2.7). A failed init container stops the
+#   pod, which makes `kubectl rollout status` fail inside its 300-second bound;
+# - the liveness probe uses the liveness route, not the readiness route:
+#   readiness is not-200 while migrations run or the server is unreachable, and
+#   a liveness check on it would restart a healthy app whenever a dependency
+#   blinks (NFR2.20).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  labels:
+    app: app
+spec:
+  replicas: 1
+  progressDeadlineSeconds: 300
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      serviceAccountName: app
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # 1. PostgreSQL answers (pg_isready every 2 s, gives up after 120 s).
+        # -U is given because the pod user 1000 has no entry in this image, and
+        # without it pg_isready cannot look up a user name and reports
+        # "no attempt". Any name works: only readiness is asked.
+        - name: wait-postgres
+          image: postgres:16.15-alpine3.24
+          command:
+            - sh
+            - -c
+            - |
+              end=$(( $(date +%s) + 120 ))
+              until pg_isready -h postgres -p 5432 -U postgres; do
+                if [ "$(date +%s)" -ge "$end" ]; then
+                  echo "postgres did not answer within 120 seconds" >&2
+                  exit 1
+                fi
+                sleep 2
+              done
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              memory: 16Mi
+              cpu: 10m
+            limits:
+              memory: 64Mi
+        # 2. The guardrails server answers its health route. Each request is
+        # bounded by AbortSignal.timeout(2000) so a hung connection cannot
+        # stall the loop; gives up after 120 s.
+        - name: wait-server
+          image: guardrails-app:local
+          imagePullPolicy: Never
+          command:
+            - node
+            - -e
+            - |
+              const end = Date.now() + 120000;
+              const attempt = async () => {
+                try {
+                  const response = await fetch('http://guardrails-server:7007/healthz', {
+                    signal: AbortSignal.timeout(2000),
+                  });
+                  if (response.ok) process.exit(0);
+                } catch {
+                  // not up yet: try again
+                }
+                if (Date.now() >= end) {
+                  console.error('guardrails-server did not answer within 120 seconds');
+                  process.exit(1);
+                }
+                setTimeout(attempt, 2000);
+              };
+              attempt();
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              memory: 32Mi
+              cpu: 10m
+            limits:
+              memory: 128Mi
+      containers:
+        - name: app
+          image: guardrails-app:local
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 7007
+          envFrom:
+            - configMapRef:
+                name: guardrails-settings
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: guardrails-db
+                  key: POSTGRES_PASSWORD
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              memory: 512Mi
+              cpu: 250m
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: static
+              mountPath: /app/node_modules/app/dist/static
+          # Compose's health check: 5 s interval, 5 s timeout, 30 retries (150 s).
+          startupProbe:
+            httpGet:
+              path: /.backstage/health/v1/readiness
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /.backstage/health/v1/readiness
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /.backstage/health/v1/liveness
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+        - name: static
+          emptyDir:
+            sizeLimit: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app
+  labels:
+    app: app
+spec:
+  type: ClusterIP
+  selector:
+    app: app
+  ports:
+    - name: http
+      port: 7007
+      targetPort: http

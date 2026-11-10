@@ -1,0 +1,29 @@
+# Non-secret settings of the minikube run (u6-minikube-run). The names are the
+# same as the environment of the app service in compose.yaml, so the
+# application reads the same settings in both runs and nothing in u4 or u5
+# changes (NFR2.27). A unit test compares the two lists.
+#
+# - The database password is NOT here: it comes from the Secret `guardrails-db`
+#   that `yarn minikube:up` creates (NFR5.14).
+# - GUARDRAILS_SEED is a literal on the guardrails-server Deployment, as it is
+#   a server setting (NFR7.3).
+# - GUARDRAILS_DEMO_SIGN_IN=true switches on the passwordless demo sign-in. It
+#   is on in this local demo only and appears in no other file (NFR5.19).
+# - The two base addresses must be equal; the browser reaches the app through
+#   the port-forward on 127.0.0.1:7007.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: guardrails-settings
+  labels:
+    app.kubernetes.io/part-of: guardrails-sample
+data:
+  GUARDRAILS_SERVER_URL: http://guardrails-server:7007
+  GUARDRAILS_DEMO_SIGN_IN: 'true'
+  APP_BASE_URL: http://localhost:7007
+  BACKEND_BASE_URL: http://localhost:7007
+  BACKEND_PORT: '7007'
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: '5432'
+  POSTGRES_DB: guardrails
+  POSTGRES_USER: guardrails

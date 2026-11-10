@@ -1,0 +1,105 @@
+# The guardrails server of the minikube run (u6-minikube-run): a Deployment of
+# one replica and a ClusterIP service. The image is built by `yarn minikube:up`
+# with `minikube image build` from packages/guardrails-server/Dockerfile and is
+# never pulled or pushed (NFR5.18).
+#
+# Rules this file follows (each is a unit test in packages/e2e, src/k8sCheck.ts):
+# - user 1000, no capabilities, no privilege escalation, read-only root file
+#   system and no writable mount at all: the server writes nothing (NFR5.15);
+# - the seed is a literal here, not in the ConfigMap (NFR7.3);
+# - terminationGracePeriodSeconds: 5, so the server-down flow of the end-to-end
+#   specs (scale to 0, wait for the pod to be gone) is quick;
+# - an exec probe of the same script as compose's health check, which allows
+#   its own request 2000 ms (NFR2.20);
+# - the label app=guardrails-server is what the stack control selects.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guardrails-server
+  labels:
+    app: guardrails-server
+spec:
+  replicas: 1
+  progressDeadlineSeconds: 300
+  selector:
+    matchLabels:
+      app: guardrails-server
+  template:
+    metadata:
+      labels:
+        app: guardrails-server
+    spec:
+      serviceAccountName: guardrails-server
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 5
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: guardrails-server
+          image: guardrails-server:local
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 7007
+          env:
+            # The fixed seed is a literal on purpose (NFR7.3).
+            - name: GUARDRAILS_SEED
+              value: '20261106'
+            - name: PORT
+              value: '7007'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 100m
+            limits:
+              memory: 256Mi
+          # Compose's health check: 5 s interval, 3 s timeout, 12 retries.
+          startupProbe:
+            exec:
+              command:
+                - node
+                - packages/guardrails-server/dist/probe/healthcheck.js
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12
+          readinessProbe:
+            exec:
+              command:
+                - node
+                - packages/guardrails-server/dist/probe/healthcheck.js
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command:
+                - node
+                - packages/guardrails-server/dist/probe/healthcheck.js
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: guardrails-server
+  labels:
+    app: guardrails-server
+spec:
+  type: ClusterIP
+  selector:
+    app: guardrails-server
+  ports:
+    - name: http
+      port: 7007
+      targetPort: http

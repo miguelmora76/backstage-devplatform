@@ -1,0 +1,35 @@
+{
+  "stage": "code-generation",
+  "unit": "u6-minikube-run",
+  "upstream_ids": [
+    "AC6.3.1", "AC6.3.2", "NFR5.1", "NFR5.12", "NFR5.13", "NFR5.3", "NFR5.14", "NFR5.2",
+    "NFR5.15", "NFR5.16", "NFR5.17", "NFR5.18", "NFR5.4", "NFR5.19", "NFR5.5", "NFR5.20",
+    "NFR5.6", "NFR5.7", "NFR5.11", "NFR1.5", "NFR2.24", "NFR5.21", "NFR5.9", "NFR5.22"
+  ],
+  "coverage": [
+    { "id": "AC6.3.1", "status": "OK", "target": "packages/e2e/src/minikubeCommands.ts" },
+    { "id": "AC6.3.2", "status": "OK", "target": "packages/e2e/src/minikubeChecks.ts" },
+    { "id": "NFR1.5", "status": "OK", "target": "packages/e2e/src/timingSwitch.ts" },
+    { "id": "NFR2.24", "status": "OK", "target": "packages/e2e/src/stackControl.ts" },
+    { "id": "NFR5.1", "status": "OK", "target": "packages/e2e/src/k8sCheck.ts" },
+    { "id": "NFR5.2", "status": "OK", "target": "packages/e2e/src/dbSecret.ts" },
+    { "id": "NFR5.3", "status": "OK", "target": "packages/e2e/src/k8sCheck.ts" },
+    { "id": "NFR5.4", "status": "OK", "target": "k8s/postgres.yaml" },
+    { "id": "NFR5.5", "status": "OK", "target": "k8s/configmap.yaml" },
+    { "id": "NFR5.6", "status": "OK", "target": "packages/e2e/specs/headers-token.spec.ts" },
+    { "id": "NFR5.7", "status": "OK", "target": "packages/e2e/specs/headers-token.spec.ts" },
+    { "id": "NFR5.9", "status": "OK", "target": ".github/workflows/ci.yml" },
+    { "id": "NFR5.11", "status": "OK", "target": "packages/e2e/specs/audit-append-only.spec.ts" },
+    { "id": "NFR5.12", "status": "N/A", "target": "u5's built-image missing-address check covers the same image; u6 adds no second check (security-design.md, Traceability)" },
+    { "id": "NFR5.13", "status": "OK", "target": "packages/e2e/src/exposureCheck.ts" },
+    { "id": "NFR5.14", "status": "OK", "target": "packages/e2e/src/dbSecret.ts" },
+    { "id": "NFR5.15", "status": "OK", "target": "k8s/app.yaml" },
+    { "id": "NFR5.16", "status": "OK", "target": "k8s/serviceaccounts.yaml" },
+    { "id": "NFR5.17", "status": "OK", "target": "packages/e2e/src/clusterGuard.ts" },
+    { "id": "NFR5.18", "status": "OK", "target": "packages/e2e/src/imageBuild.ts" },
+    { "id": "NFR5.19", "status": "OK", "target": "k8s/configmap.yaml" },
+    { "id": "NFR5.20", "status": "OK", "target": "packages/e2e/src/minikubeChecks.ts" },
+    { "id": "NFR5.21", "status": "OK", "target": ".github/workflows/ci.yml" },
+    { "id": "NFR5.22", "status": "OK", "target": "packages/e2e/src/portForward.ts" }
+  ]
+}
