@@ -41,19 +41,20 @@ export function ensureSecret(
     );
   }
   const value = generatePassword(random);
-  const result = runKubectl(
-    run,
-    [
-      'create',
-      'secret',
-      'generic',
-      SECRET_NAME,
-      '--from-file=POSTGRES_PASSWORD=/dev/stdin',
-    ],
-    { input: value },
-  );
+  // A manifest on standard input read with `-f -`: kubectl reads the stream
+  // itself. `--from-file=…=/dev/stdin` opens the path, which fails ("no such
+  // device or address") when the input is a pipe or socket, as it is here.
+  const manifest = JSON.stringify({
+    apiVersion: 'v1',
+    kind: 'Secret',
+    type: 'Opaque',
+    metadata: { name: SECRET_NAME },
+    stringData: { POSTGRES_PASSWORD: value },
+  });
+  const result = runKubectl(run, ['create', '-f', '-'], { input: manifest });
   if (result.error || result.status !== 0) {
     const detail = (result.error ?? result.stderr).split(value).join('***');
+    // The manifest is never echoed: only kubectl's own message is shown.
     throw new Error(
       `Could not create the Secret ${SECRET_NAME}: ${detail.trim() || `exit ${result.status}`}`,
     );

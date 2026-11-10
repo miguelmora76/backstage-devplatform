@@ -72,7 +72,7 @@ function setup(options: Options = {}) {
         : NOT_FOUND,
     },
     { when: ['get', 'pvc', 'postgres-data-postgres-0'], result: NOT_FOUND },
-    { when: ['create', 'secret'] },
+    { when: ['create', '-f', '-'] },
     { when: ['apply', '-k', 'k8s/'] },
     {
       when: ['rollout', 'status'],
@@ -173,7 +173,7 @@ describe('minikubeUp (FR9.1, NFR2.19)', () => {
       'du -sxm',
       'get namespace guardrails-sample',
       'get secret guardrails-db',
-      'create secret generic guardrails-db',
+      'create -f -',
       'apply -k k8s/',
       'rollout status statefulset/postgres',
       'rollout status deployment/guardrails-server',
@@ -240,7 +240,7 @@ describe('minikubeUp (FR9.1, NFR2.19)', () => {
   it('a second up reuses the Secret and creates nothing new in it', async () => {
     const { deps, lines } = setup({ running: true, secretExists: true });
     await minikubeUp(deps);
-    expect(lines().some(l => l.includes('create secret'))).toBe(false);
+    expect(lines().some(l => l.includes('create -f -'))).toBe(false);
     expect(lines().some(l => l.includes('apply -k k8s/'))).toBe(true);
   });
 

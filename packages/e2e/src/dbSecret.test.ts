@@ -16,27 +16,34 @@ const noClaim: Rule = {
     stderr: 'Error from server (NotFound): persistentvolumeclaims not found',
   },
 };
-const creates: Rule = { when: ['create', 'secret'] };
+const creates: Rule = { when: ['create'] };
 
 describe('ensureSecret (NFR5.14)', () => {
-  it('creates the Secret with the value on standard input and in no argument', () => {
+  it('creates the Secret from a manifest on standard input, with the value in no argument', () => {
     const { run, calls } = fakeRunner([noSecret, noClaim, creates]);
     const result = ensureSecret(run, random);
     expect(result).toEqual({ created: true });
     const create = calls.find(c => c.args.includes('create'))!;
+    // `-f -` makes kubectl read the stream itself; `--from-file=…=/dev/stdin`
+    // fails ("no such device or address") when the input is a pipe or socket.
     expect(create.args).toEqual([
       '--context',
       'minikube',
       '-n',
       'guardrails-sample',
       'create',
-      'secret',
-      'generic',
-      SECRET_NAME,
-      '--from-file=POSTGRES_PASSWORD=/dev/stdin',
+      '-f',
+      '-',
     ]);
-    expect(create.options?.input).toBe(VALUE);
-    expect(create.options?.input).toHaveLength(32);
+    const manifest = JSON.parse(create.options?.input ?? '{}');
+    expect(manifest).toEqual({
+      apiVersion: 'v1',
+      kind: 'Secret',
+      type: 'Opaque',
+      metadata: { name: SECRET_NAME },
+      stringData: { POSTGRES_PASSWORD: VALUE },
+    });
+    expect(manifest.stringData.POSTGRES_PASSWORD).toHaveLength(32);
     for (const call of calls) {
       expect(call.line).not.toContain(VALUE);
     }
@@ -46,11 +53,13 @@ describe('ensureSecret (NFR5.14)', () => {
     const { run, calls } = fakeRunner([noSecret, noClaim, creates]);
     ensureSecret(run);
     ensureSecret(run);
-    const inputs = calls
+    const passwords = calls
       .filter(c => c.args.includes('create'))
-      .map(c => c.options?.input);
-    expect(inputs[0]).toMatch(/^[0-9a-f]{32}$/);
-    expect(inputs[0]).not.toBe(inputs[1]);
+      .map(
+        c => JSON.parse(c.options?.input ?? '{}').stringData.POSTGRES_PASSWORD,
+      );
+    expect(passwords[0]).toMatch(/^[0-9a-f]{32}$/);
+    expect(passwords[0]).not.toBe(passwords[1]);
   });
 
   it('leaves an existing Secret unchanged and writes nothing', () => {
@@ -75,7 +84,7 @@ describe('ensureSecret (NFR5.14)', () => {
       noSecret,
       noClaim,
       {
-        when: ['create', 'secret'],
+        when: ['create'],
         result: { status: 1, stderr: `failed to read ${VALUE}` },
       },
     ]);
