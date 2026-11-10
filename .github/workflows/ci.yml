@@ -604,21 +604,21 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: yarn
       - run: yarn install --frozen-lockfile
+      # The runner supplies Chrome and the browser system libraries. Install
+      # only Playwright's patched Firefox, before starting the sample. Retrying
+      # --with-deps is unsafe: a timed-out sudo apt-get can keep the dpkg lock.
+      - name: Install Playwright Firefox
+        timeout-minutes: 14
+        run: |
+          for attempt in 1 2 3; do
+            time timeout --kill-after=30s 240s yarn workspace ${{ env.E2E_NAME }} playwright install firefox && exit 0
+            echo "Firefox install attempt ${attempt} failed or timed out"
+          done
+          exit 1
       - name: Start the sample from a reset
         run: |
           time yarn compose:reset
           time yarn compose:up
-      # The browser download and its system packages once stalled for 16
-      # minutes on a runner and used up the job's time budget: each attempt is
-      # limited to 4 minutes and there are three attempts.
-      - name: Install Chrome and Firefox
-        timeout-minutes: 14
-        run: |
-          for attempt in 1 2 3; do
-            time timeout 240 yarn workspace ${{ env.E2E_NAME }} playwright install --with-deps chrome firefox && exit 0
-            echo "Browser install attempt ${attempt} failed or timed out"
-          done
-          exit 1
       - name: Flows, accessibility, keyboard, tree, headers, token, audit and repeatability
         run: time yarn e2e specs
       - name: Timing (20 loads of each view, Chrome)
@@ -666,6 +666,17 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: yarn
       - run: yarn install --frozen-lockfile
+      # The runner supplies Chrome and the browser system libraries. Install
+      # only Playwright's patched Firefox, before starting minikube. Retrying
+      # --with-deps is unsafe: a timed-out sudo apt-get can keep the dpkg lock.
+      - name: Install Playwright Firefox
+        timeout-minutes: 14
+        run: |
+          for attempt in 1 2 3; do
+            time timeout --kill-after=30s 240s yarn workspace ${{ env.E2E_NAME }} playwright install firefox && exit 0
+            echo "Firefox install attempt ${attempt} failed or timed out"
+          done
+          exit 1
       # minikube v1.39.0; digest from
       # https://github.com/kubernetes/minikube/releases/download/v1.39.0/minikube-linux-amd64.sha256
       - name: Install minikube v1.39.0 (checked against its published SHA-256)
@@ -694,17 +705,6 @@ jobs:
           time yarn minikube:up
       - name: Save the upgrade plan of one service
         run: yarn e2e plan-snapshot ${{ env.E2E }}/dist/out/plan-first.json
-      # The browser download and its system packages once stalled for 16
-      # minutes on a runner and used up the job's time budget: each attempt is
-      # limited to 4 minutes and there are three attempts.
-      - name: Install Chrome and Firefox
-        timeout-minutes: 14
-        run: |
-          for attempt in 1 2 3; do
-            time timeout 240 yarn workspace ${{ env.E2E_NAME }} playwright install --with-deps chrome firefox && exit 0
-            echo "Browser install attempt ${attempt} failed or timed out"
-          done
-          exit 1
       - name: Flows, accessibility, keyboard, tree, headers, token, audit and repeatability
         run: time E2E_STACK=minikube yarn e2e specs
       - name: Exposure, images, restarts and output scan

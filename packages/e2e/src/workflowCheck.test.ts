@@ -68,6 +68,27 @@ describe('.github/workflows/ci.yml (real file)', () => {
     expect(typecheck).toContain('env.E2E');
   });
 
+  it('installs only Playwright Firefox before starting either live stack', () => {
+    const jobs = workflow().jobs;
+    for (const [jobName, start] of [
+      ['compose-e2e', 'yarn compose:reset'],
+      ['minikube-e2e', 'minikube start'],
+    ]) {
+      const steps = jobs[jobName].steps as any[];
+      const installIndex = steps.findIndex(step =>
+        /playwright install firefox/.test(String(step.run)),
+      );
+      const startIndex = steps.findIndex(step =>
+        String(step.run).includes(start),
+      );
+      const runs = steps.map(step => String(step.run ?? '')).join('\n');
+      expect(installIndex).toBeGreaterThan(-1);
+      expect(installIndex).toBeLessThan(startIndex);
+      expect(runs).not.toContain('playwright install --with-deps');
+      expect(runs).not.toMatch(/playwright install .*chrome/);
+    }
+  });
+
   it('uses the same exact database tag as compose in both plugin jobs', () => {
     const tag = compose().services.postgres.image;
     const jobs = workflow().jobs;
