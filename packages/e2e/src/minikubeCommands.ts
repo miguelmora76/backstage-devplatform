@@ -104,7 +104,13 @@ function ensureCluster(deps: MiniDeps): void {
   } else {
     const start = runMinikube(
       deps.run,
-      ['start', '--driver=docker', '--cpus=2', '--memory=4096'],
+      [
+        'start',
+        '--driver=docker',
+        '--container-runtime=docker',
+        '--cpus=2',
+        '--memory=4096',
+      ],
       { inherit: true },
     );
     if (start.status !== 0 || start.error) {

@@ -673,7 +673,7 @@ jobs:
           sudo install "${RUNNER_TEMP}/kubectl" /usr/local/bin/kubectl
           kubectl version --client
       - name: Start the minikube cluster
-        run: time minikube start --driver=docker --cpus=2 --memory=4096
+        run: time minikube start --driver=docker --container-runtime=docker --cpus=2 --memory=4096
       - name: First fresh start of the sample
         run: |
           time yarn minikube:down

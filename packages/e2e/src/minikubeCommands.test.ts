@@ -144,7 +144,7 @@ describe('minikubeUp (FR9.1, NFR2.19)', () => {
     await minikubeUp(deps);
     const starts = lines().filter(l => l.includes(' start '));
     expect(starts).toEqual([
-      'minikube --profile minikube start --driver=docker --cpus=2 --memory=4096',
+      'minikube --profile minikube start --driver=docker --container-runtime=docker --cpus=2 --memory=4096',
     ]);
     const start = index(lines(), ' start ');
     const guard = index(lines(), 'config current-context', start);

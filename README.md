@@ -355,7 +355,7 @@ Added by unit u6. This is the optional second way to run the sample: the same th
 | [kubectl](https://kubernetes.io/docs/tasks/tools/) | v1.37.2 in CI (v1.33.1 also works here)          | within one minor version of the cluster            |
 | Node 22 or later and Yarn                          | as for the rest of the project                   | `yarn install` once                                |
 
-The cluster needs about 4 GB of memory and 2 CPUs. `yarn minikube:up` starts it for you with `minikube start --driver=docker --cpus=2 --memory=4096`; if a `minikube` cluster already exists it is reused as it is (minikube cannot change the memory or CPUs of an existing cluster; run `minikube delete` first if it is too small).
+The cluster needs about 4 GB of memory and 2 CPUs. `yarn minikube:up` starts it for you with `minikube start --driver=docker --container-runtime=docker --cpus=2 --memory=4096`; if a `minikube` cluster already exists it is reused as it is (minikube cannot change the memory or CPUs of an existing cluster; run `minikube delete` first if it is too small).
 
 ### The two commands
 
