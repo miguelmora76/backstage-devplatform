@@ -114,13 +114,20 @@ function minikubeBackend(deps: StackDeps): StackControl {
       if (!name) throw new Error(`No running pod for ${service}`);
       return name;
     },
-    // Scale to zero and wait for the pod object to be gone, so the spec never
-    // goes on while the old pod could still answer, and the later start
-    // cannot match a pod that is terminating.
+    // Scale to zero (so the Deployment does not make a new pod), kill the pod
+    // with no grace period, and wait for the pod object to be gone, so the
+    // spec never goes on while the old pod could still answer, and the later
+    // start cannot match a pod that is terminating. The kill matters: the
+    // pod's termination grace plus kubectl overhead took 5 to 8 s in CI, longer
+    // than the 5 s the plugin reuses a health probe result for.
     end(pod) {
       checked(
         `kubectl scale deployment/${SERVER} --replicas=0`,
         kubectl(['scale', `deployment/${SERVER}`, '--replicas=0']),
+      );
+      checked(
+        `kubectl delete ${pod}`,
+        kubectl(['delete', pod, '--grace-period=0', '--force', '--wait=false']),
       );
       checked(
         `kubectl wait --for=delete ${pod}`,

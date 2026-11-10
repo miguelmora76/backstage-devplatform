@@ -96,10 +96,11 @@ describe('the minikube backend (NFR2.24)', () => {
     result: { stdout: `${name}\n` },
   });
 
-  it('finds the pod, scales to 0, waits for its deletion, scales to 1, waits for the rollout', async () => {
+  it('finds the pod, scales to 0, kills the pod at once, waits for its deletion, scales to 1, waits for the rollout', async () => {
     const { stackDeps, lines } = deps([
       running('pod/guardrails-server-7d9f'),
       { when: ['scale'] },
+      { when: ['delete'] },
       { when: ['wait'] },
       { when: ['rollout', 'status'] },
     ]);
@@ -110,6 +111,10 @@ describe('the minikube backend (NFR2.24)', () => {
     expect(lines()).toEqual([
       `kubectl --context minikube -n guardrails-sample get pod -l app=guardrails-server --field-selector=status.phase=Running -o name`,
       `${KUBECTL} scale deployment/guardrails-server --replicas=0`,
+      // No grace period: the pod's own 5 s termination grace plus kubectl
+      // overhead took 5 to 8 s in CI, longer than the 5 s the plugin reuses a
+      // health probe result for, so the flow saw 503 instead of a failed change.
+      `${KUBECTL} delete pod/guardrails-server-7d9f --grace-period=0 --force --wait=false`,
       `${KUBECTL} wait --for=delete pod/guardrails-server-7d9f --timeout=30s`,
       `${KUBECTL} scale deployment/guardrails-server --replicas=1`,
       `${KUBECTL} rollout status deployment/guardrails-server --timeout=60s`,
@@ -134,6 +139,7 @@ describe('the minikube backend (NFR2.24)', () => {
   it('stops before scaling up when the deletion wait times out', () => {
     const { stackDeps, lines } = deps([
       { when: ['scale'] },
+      { when: ['delete'] },
       {
         when: ['wait'],
         result: { status: 1, stderr: 'timed out waiting for the condition' },
@@ -155,6 +161,13 @@ describe('the minikube backend (NFR2.24)', () => {
     ).toThrow(
       /scale deployment\/guardrails-server --replicas=0 failed: forbidden/,
     );
+    const kill = deps([
+      { when: ['scale'] },
+      { when: ['delete'], result: { status: 1, stderr: 'not allowed' } },
+    ]);
+    expect(() =>
+      createStackControl('minikube', kill.stackDeps).end('pod/x'),
+    ).toThrow(/kubectl delete pod\/x.*failed: not allowed/);
     const rollout = deps([
       { when: ['scale'] },
       { when: ['rollout'], result: { status: 1, stderr: 'deadline exceeded' } },
@@ -170,6 +183,7 @@ describe('the minikube backend (NFR2.24)', () => {
     const { stackDeps, lines } = deps([
       running('pod/a'),
       { when: ['scale'] },
+      { when: ['delete'] },
       { when: ['wait'] },
       { when: ['rollout'] },
     ]);

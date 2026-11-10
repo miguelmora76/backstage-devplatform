@@ -30809,3 +30809,147 @@
 **Context**: construction > build-and-test > cross-unit-traceability.md
 
 ---
+
+## Session Resume
+**Timestamp**: 2026-11-10T12:39:52Z
+**Event**: SESSION_RESUMED
+**Source**: resume
+**Session**: ba751f61-241a-4993-a2ca-0b2c50399bae
+
+---
+
+## Human Turn
+**Timestamp**: 2026-11-10T12:40:25Z
+**Event**: HUMAN_TURN
+**Session**: ba751f61-241a-4993-a2ca-0b2c50399bae
+**Origin**: person
+**Source**: typed
+**Message Id**: 921c7b99
+**Open Questions**: 97988e66
+
+---
+
+## Human Turn
+**Timestamp**: 2026-11-10T12:45:08Z
+**Event**: HUMAN_TURN
+**Session**: ba751f61-241a-4993-a2ca-0b2c50399bae
+**Origin**: person
+**Source**: typed
+**Message Id**: a936927e
+**Open Questions**: 97988e66
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-11-10T12:46:24Z
+**Event**: SENSOR_FIRED
+**Fire id**: 1a1a4090
+**Sensor ID**: type-check
+**Stage slug**: build-and-test
+**Output path**: packages/e2e/src/stackControl.test.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-11-10T12:46:25Z
+**Event**: SENSOR_PASSED
+**Fire id**: 1a1a4090
+**Sensor ID**: type-check
+**Stage slug**: build-and-test
+**Output path**: packages/e2e/src/stackControl.test.ts
+**Duration ms**: 763
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-11-10T12:46:25Z
+**Event**: SENSOR_FIRED
+**Fire id**: 3dc7c5e9
+**Sensor ID**: type-check
+**Stage slug**: build-and-test
+**Output path**: packages/e2e/src/stackControl.test.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-11-10T12:46:26Z
+**Event**: SENSOR_PASSED
+**Fire id**: 3dc7c5e9
+**Sensor ID**: type-check
+**Stage slug**: build-and-test
+**Output path**: packages/e2e/src/stackControl.test.ts
+**Duration ms**: 511
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-11-10T12:46:27Z
+**Event**: SENSOR_FIRED
+**Fire id**: 30de3d7d
+**Sensor ID**: type-check
+**Stage slug**: build-and-test
+**Output path**: packages/e2e/src/stackControl.test.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-11-10T12:46:28Z
+**Event**: SENSOR_PASSED
+**Fire id**: 30de3d7d
+**Sensor ID**: type-check
+**Stage slug**: build-and-test
+**Output path**: packages/e2e/src/stackControl.test.ts
+**Duration ms**: 505
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-11-10T12:46:29Z
+**Event**: SENSOR_FIRED
+**Fire id**: 19ca65b5
+**Sensor ID**: type-check
+**Stage slug**: build-and-test
+**Output path**: packages/e2e/src/stackControl.test.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-11-10T12:46:29Z
+**Event**: SENSOR_PASSED
+**Fire id**: 19ca65b5
+**Sensor ID**: type-check
+**Stage slug**: build-and-test
+**Output path**: packages/e2e/src/stackControl.test.ts
+**Duration ms**: 511
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-11-10T12:46:37Z
+**Event**: SENSOR_FIRED
+**Fire id**: 7c75148f
+**Sensor ID**: type-check
+**Stage slug**: build-and-test
+**Output path**: packages/e2e/src/stackControl.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-11-10T12:46:37Z
+**Event**: SENSOR_PASSED
+**Fire id**: 7c75148f
+**Sensor ID**: type-check
+**Stage slug**: build-and-test
+**Output path**: packages/e2e/src/stackControl.ts
+**Duration ms**: 550
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-11-10T12:48:26Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261106-backstage-guardrails-plu/construction/build-and-test/build-and-test-summary.md
+**Context**: construction > build-and-test > build-and-test-summary.md
+
+---

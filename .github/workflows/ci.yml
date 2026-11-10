@@ -608,8 +608,17 @@ jobs:
         run: |
           time yarn compose:reset
           time yarn compose:up
+      # The browser download and its system packages once stalled for 16
+      # minutes on a runner and used up the job's time budget: each attempt is
+      # limited to 4 minutes and there are three attempts.
       - name: Install Chrome and Firefox
-        run: time yarn workspace ${{ env.E2E_NAME }} playwright install --with-deps chrome firefox
+        timeout-minutes: 14
+        run: |
+          for attempt in 1 2 3; do
+            time timeout 240 yarn workspace ${{ env.E2E_NAME }} playwright install --with-deps chrome firefox && exit 0
+            echo "Browser install attempt ${attempt} failed or timed out"
+          done
+          exit 1
       - name: Flows, accessibility, keyboard, tree, headers, token, audit and repeatability
         run: time yarn e2e specs
       - name: Timing (20 loads of each view, Chrome)
@@ -673,15 +682,29 @@ jobs:
           sudo install "${RUNNER_TEMP}/kubectl" /usr/local/bin/kubectl
           kubectl version --client
       - name: Start the minikube cluster
-        run: time minikube start --driver=docker --container-runtime=docker --cpus=2 --memory=4096
+        # The runner has 4 CPUs and 16 GB. The cluster shares them with the
+        # browsers, so it gets more headroom here than the 2 CPUs and 4 GB the
+        # script asks for on a laptop: a slow answer from the guardrails server
+        # makes the plugin report it unreachable for 5 seconds, and a view loaded
+        # in that window shows an error.
+        run: time minikube start --driver=docker --container-runtime=docker --cpus=4 --memory=8192
       - name: First fresh start of the sample
         run: |
           time yarn minikube:down
           time yarn minikube:up
       - name: Save the upgrade plan of one service
         run: yarn e2e plan-snapshot ${{ env.E2E }}/dist/out/plan-first.json
+      # The browser download and its system packages once stalled for 16
+      # minutes on a runner and used up the job's time budget: each attempt is
+      # limited to 4 minutes and there are three attempts.
       - name: Install Chrome and Firefox
-        run: time yarn workspace ${{ env.E2E_NAME }} playwright install --with-deps chrome firefox
+        timeout-minutes: 14
+        run: |
+          for attempt in 1 2 3; do
+            time timeout 240 yarn workspace ${{ env.E2E_NAME }} playwright install --with-deps chrome firefox && exit 0
+            echo "Browser install attempt ${attempt} failed or timed out"
+          done
+          exit 1
       - name: Flows, accessibility, keyboard, tree, headers, token, audit and repeatability
         run: time E2E_STACK=minikube yarn e2e specs
       - name: Exposure, images, restarts and output scan
