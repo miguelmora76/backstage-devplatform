@@ -9,7 +9,7 @@ import { defineConfig, devices } from '@playwright/test';
 // headers and storage are never recorded.
 const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:7007';
 const viewport = { width: 1440, height: 900 };
-const browserSpecs = /(flows|a11y|keyboard|tree)\.spec\.ts/;
+const browserSpecs = /(flows|a11y|keyboard|tree|layout)\.spec\.ts/;
 
 export default defineConfig({
   testDir: 'specs',

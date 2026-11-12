@@ -41,8 +41,8 @@ describe('app wiring', () => {
     global.fetch = originalFetch;
   });
 
-  it('loads the catalog pages, the sign-in page and the guardrails plugin, and nothing else (BR1.1)', () => {
-    expect(appFeatures).toHaveLength(3);
+  it('loads the catalog pages, the sign-in page, the guardrails plugin and the user settings page, and nothing else (BR1.1, revised: the person asked for a visible light/dark switch)', () => {
+    expect(appFeatures).toHaveLength(4);
     expect(appFeatures).toContain(guardrailsPlugin);
     expect(appFeatures).toContain(signInModule);
     const ids = appFeatures.map(
@@ -50,6 +50,7 @@ describe('app wiring', () => {
     );
     expect(ids).toContain('catalog');
     expect(ids).toContain('guardrails');
+    expect(ids).toContain('user-settings');
   });
 
   it('puts the sign-in page into the app plugin (BR2.2)', () => {

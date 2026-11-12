@@ -19,6 +19,7 @@ Everything runs on invented data and locally (docker compose, with minikube as a
 - [Continuous integration](#continuous-integration)
 - [Folder layout](#folder-layout)
 - [Contracts between the units](#contracts-between-the-units)
+- [Look and theme](#look-and-theme)
 - [Known limits](#known-limits)
 - [Troubleshooting](#troubleshooting)
 - [Status of the units](#status-of-the-units)
@@ -247,13 +248,23 @@ aidlc/                          the design record of every unit (requirements, d
 
 The full text is in `aidlc/spaces/default/intents/261106-backstage-guardrails-plu/inception/contract-design/contract-summary.md`.
 
+## Look and theme
+
+- **One stylesheet for Backstage's page shell.** The header, navigation and tabs of the host app are built from Backstage UI components. Their styles come from `@backstage/ui/css/styles.css`, which `packages/app/src/index.tsx` imports. `@backstage/ui` is a direct dependency of the app (and is in `packages/app/allowed-packages.txt`). The file is served from the app's own address, so the content policy needs no new allowance.
+- **Dark by default, with a visible switch.** A first-time visitor sees the dark theme. After signing in, the **Settings** link in the sidebar opens Backstage's settings page (the `@backstage/plugin-user-settings` plugin, the app's fourth feature next to the catalog, the sign-in module and the Guardrails plugin). Its **Theme** control offers Auto, Light and Dark, and works with the mouse and the keyboard (Tab to a choice, then Enter or Space). Backstage stores the choice itself under the key `theme`, and a choice made earlier wins over the default. The default is set in `packages/app/src/theme/defaultTheme.ts`, which the sign-in module carries; that code reads and writes no browser storage itself.
+- **Catalog list width.** The cells of Backstage's catalog table (the table the app names "Catalog entries") get 4 pixels of sideways padding instead of 16 to 20 (`packages/app/src/layout/CatalogTableLayout.tsx`), so the list fits at 1024 and 1308 pixels without its own scrollbar and names are never broken inside a word.
+- **The Guardrails plugin takes its colours from the theme.** `StatusLabel` and `ShieldMark` start from the theme's status and primary colours and move them only as far as needed to read at contrast (5:1 for status text, 3:1 for the shield). No fixed colour is left in the plugin. Every status still shows a word and an icon, never colour alone.
+- **Layout.** The sign-in page shows the three users in one centred container of limited width. The Guardrails view's two-column grid shrinks to one column in a narrow window instead of pushing past the right edge.
+- **Checks.** `yarn workspace e2e playwright test --project chrome --project firefox --no-deps layout a11y` (with the compose stack running) checks that none of the six views scrolls sideways or clips at 1024, 1308 and 1440 pixels, and runs the accessibility scan on all six views in both themes.
+- **Safari is checked by hand.** From `yarn compose:up`, open http://localhost:7007 in Safari on macOS and look at the six views (sign-in choices, catalog list, service overview, changes list, change detail, audit log) and the settings page in the dark theme and then the light theme (choose Light on the settings page). Each should be styled, with nothing cut off at the right edge. No automated Safari check exists.
+
 ## Known limits
 
 - **Passwordless demo sign-in.** Replace the provider before any hosted use. It is off by default and the README, settings and a log line all say so.
 - **`unsafe-eval` for scripts.** Backstage's pages need script evaluation, so the content policy allows it for `script-src` only. A stricter policy would need Backstage to stop evaluating strings; revisit it before hosting.
 - **A reload signs you out.** The sign-in is held in memory by design and never renewed.
 - **Data is lost on restart** with the in-memory database (plain local runs). Compose uses PostgreSQL with a volume.
-- **The app has little styling of its own.** It uses Backstage's default theme and the pages are plain; visual polish is not part of this sample.
+- **The look is Backstage's own.** The app uses Backstage's stock light and dark themes with its accent and status colours; there is no custom brand colour or logo, and nothing below 1024 pixels wide is laid out for phones or tablets. Safari is checked by hand only.
 - **The catalog matches one seed.** See [The catalog and the seed](#the-catalog-and-the-seed).
 - **Local only.** No hosted environment, no TLS, no managed database. The settings are written so hosting later changes settings, not code.
 

@@ -9,6 +9,7 @@
  *   order; the sort label keeps both.
  * - Each filter combobox gets the name of the label text before it.
  * - The list table and the paging table get a name.
+ * - A tab (settings page) that points at a panel not on the page loses that pointer.
  */
 const ZERO_WIDTH = new RegExp('[\\u200b-\\u200d\\ufeff]', 'g');
 
@@ -19,6 +20,18 @@ export function fixCatalogAccessibility(root: ParentNode): void {
       handle.setAttribute('tabindex', '-1');
       handle.removeAttribute('role');
       handle.removeAttribute('aria-describedby');
+    });
+
+  // The settings page's tabs name a panel that is not on the page until the
+  // tab is chosen (axe `aria-valid-attr-value`); a reference to nothing is
+  // dropped, a reference to a panel that exists is kept.
+  root
+    .querySelectorAll<HTMLElement>('[role="tab"][aria-controls]')
+    .forEach(tab => {
+      const target = tab.getAttribute('aria-controls');
+      if (target && !tab.ownerDocument.getElementById(target)) {
+        tab.removeAttribute('aria-controls');
+      }
     });
 
   root.querySelectorAll<HTMLElement>('[role="combobox"]').forEach(combobox => {

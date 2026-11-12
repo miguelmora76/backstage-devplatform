@@ -2067,6 +2067,15 @@
     react-use "^17.3.2"
     zod "^4.0.0"
 
+"@backstage/plugin-signals-react@^0.0.27":
+  version "0.0.27"
+  resolved "https://registry.yarnpkg.com/@backstage/plugin-signals-react/-/plugin-signals-react-0.0.27.tgz#00e7a98cd3e0e495d94ee960fb84651bbf2dd35a"
+  integrity sha512-C3+3L0qCB2gf1nUD3GO5ZtMvupUvEZ1E33oxAOcZQR6JyH7urHrjs2WTG/NqTZ17qUnWReC+bg9UG6CE+Gpipg==
+  dependencies:
+    "@backstage/core-plugin-api" "^1.12.11"
+    "@backstage/types" "^1.2.2"
+    "@material-ui/core" "^4.12.4"
+
 "@backstage/plugin-techdocs-common@^0.1.2":
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/@backstage/plugin-techdocs-common/-/plugin-techdocs-common-0.1.2.tgz#84ae9b6f44d25ca8daedebf8e87e6d7ffa426023"
@@ -2091,6 +2100,37 @@
     jss "~10.10.0"
     lodash "^4.17.21"
     react-use "^17.2.4"
+
+"@backstage/plugin-user-settings-common@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@backstage/plugin-user-settings-common/-/plugin-user-settings-common-0.1.0.tgz#479a1e8e5fa85c0bfb451420b7023e4584b2453c"
+  integrity sha512-hAqgQrlSt9FvLVTwpPj/yKkS8NuDwAlMxqrsqlHXQ4Fho+THP4VI5SN5Qi2pDyhn//pZ7vtzrC0eEApDXHDjJg==
+  dependencies:
+    "@backstage/types" "^1.2.2"
+
+"@backstage/plugin-user-settings@^0.9.8":
+  version "0.9.8"
+  resolved "https://registry.yarnpkg.com/@backstage/plugin-user-settings/-/plugin-user-settings-0.9.8.tgz#9419ecc59aaeb4699f46bdcebb7e8f0c1b79b644"
+  integrity sha512-rMRvaA9bFfviJCG35CcHu16BrQ7b+8aGLyBqZezg4tYbyXyTxyIN+A7TcQ8HGmGOBpaozmeRgv5BlaHzGQaohw==
+  dependencies:
+    "@backstage/catalog-model" "^1.10.2"
+    "@backstage/core-app-api" "^1.20.6"
+    "@backstage/core-components" "^0.18.15"
+    "@backstage/core-plugin-api" "^1.12.11"
+    "@backstage/errors" "^1.3.2"
+    "@backstage/frontend-plugin-api" "^0.18.2"
+    "@backstage/plugin-catalog-react" "^3.3.0"
+    "@backstage/plugin-signals-react" "^0.0.27"
+    "@backstage/plugin-user-settings-common" "^0.1.0"
+    "@backstage/theme" "^0.7.3"
+    "@backstage/types" "^1.2.2"
+    "@backstage/ui" "^0.19.0"
+    "@material-ui/core" "^4.12.2"
+    "@material-ui/icons" "^4.9.1"
+    "@material-ui/lab" "4.0.0-alpha.61"
+    dataloader "^2.0.0"
+    react-use "^17.2.4"
+    zen-observable "^0.10.0"
 
 "@backstage/release-manifests@^0.0.15":
   version "0.0.15"

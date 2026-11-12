@@ -98,9 +98,14 @@ export function GuardrailsView({ service }: { service: string }) {
           />
         )}
         <div
+          data-testid="guardrails-sections"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
+            // Two columns when there is room, one when there is not; the
+            // minimum is capped at the width of the container, so the grid
+            // never pushes past the right edge (FR3.1).
+            gridTemplateColumns:
+              'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
             gap: 16,
           }}
         >

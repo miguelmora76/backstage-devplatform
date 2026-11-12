@@ -1,5 +1,7 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { axe } from 'jest-axe';
+import { ThemeProvider, type Theme } from '@material-ui/core/styles';
+import { themes } from '@backstage/theme';
 import { GuardrailsOverviewCard } from '../components/GuardrailsOverviewCard';
 import { GuardrailsView } from '../screens/GuardrailsView';
 import { renderScreen, setupStandIn } from '../testing/harness';
@@ -214,5 +216,23 @@ describe('Guardrails view variants (Screen B)', () => {
     expect(await axe(document.body, options)).toHaveNoViolations();
     // Let pending loads finish so nothing updates after the test.
     await waitFor(() => undefined);
+  });
+});
+
+// NFR1: the Guardrails view has no violation in the dark and in the light
+// theme (colour contrast is checked in the real browser, specs/a11y.spec.ts).
+describe.each(['dark', 'light'] as const)('view in the %s theme', mode => {
+  it('has no violations once loaded', async () => {
+    const theme = themes[mode].getTheme('v4') as Theme;
+    const { container } = renderScreen(
+      <ThemeProvider theme={theme}>
+        <GuardrailsView service={SERVICE} />
+      </ThemeProvider>,
+    );
+    await screen.findByText('Upgrade lib-a from 1.2 to 2.0');
+    await waitFor(() =>
+      expect(screen.getByText('Page 1 of 3')).toBeInTheDocument(),
+    );
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

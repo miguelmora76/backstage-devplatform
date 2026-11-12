@@ -22,6 +22,24 @@ describe('fixCatalogAccessibility (catalog list, WCAG 2.1 AA)', () => {
     expect(sort.getAttribute('tabindex')).toBe('0');
   });
 
+  it("drops a tab's aria-controls when the panel it names is not on the page (settings page tabs, NFR1)", () => {
+    const root = build(
+      '<div><button role="tab" id="t1" aria-controls="p1">General</button><button role="tab" id="t2" aria-controls="p2">Other</button><div id="p2" role="tabpanel"></div></div>',
+    );
+    document.body.appendChild(root);
+    try {
+      fixCatalogAccessibility(root);
+      expect(root.querySelector('#t1')!.hasAttribute('aria-controls')).toBe(
+        false,
+      );
+      expect(root.querySelector('#t2')!.getAttribute('aria-controls')).toBe(
+        'p2',
+      );
+    } finally {
+      root.remove();
+    }
+  });
+
   it('names a combobox from the label text that sits before it', () => {
     const root = build(
       '<div><span>Owner​</span><div role="combobox"><input type="text"></div></div>',
