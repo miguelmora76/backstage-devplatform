@@ -29,6 +29,11 @@ backend:
     # (the entity page fails with an EvalError without it, seen in a real
     # browser run). Recorded as a deviation from security design S9.
     script-src: ["'self'", "'unsafe-eval'"]
+    # Backstage adds this upgrade directive by default. Safari then loads
+    # http://localhost assets over https and shows a blank page (Chrome exempts
+    # localhost). Off here because the run is local over http; a hosted run
+    # behind https should turn it back on.
+    upgrade-insecure-requests: false
   # In-memory SQLite for plain local runs; app-config.postgres.yaml replaces it.
   database:
     client: better-sqlite3

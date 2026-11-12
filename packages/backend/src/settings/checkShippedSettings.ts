@@ -170,14 +170,16 @@ export function checkShippedSettings(files: SettingsFiles): SettingsFinding[] {
       : [];
   const scriptSrc = get(csp, 'script-src');
   const badValue = directives.some(([directive, values]) =>
-    [values]
-      .flat()
-      .some(
-        value =>
-          typeof value !== 'string' ||
+    [values].flat().some(
+      value =>
+        // `upgrade-insecure-requests: false` switches that directive off
+        // (checked separately below); every other value must be a string.
+        (directive !== 'upgrade-insecure-requests' ||
+          typeof value !== 'boolean') &&
+        (typeof value !== 'string' ||
           value.includes('*') ||
-          (value.includes('unsafe-eval') && directive !== 'script-src'),
-      ),
+          (value.includes('unsafe-eval') && directive !== 'script-src')),
+    ),
   );
   if (
     directives.length === 0 ||
@@ -188,6 +190,16 @@ export function checkShippedSettings(files: SettingsFiles): SettingsFinding[] {
     add(
       'content-policy',
       "backend.csp must be present, with no wildcard host, script-src including 'self', and unsafe-eval only in script-src.",
+    );
+  }
+
+  // Safari rewrites every http://localhost request to https when the policy
+  // carries `upgrade-insecure-requests` (Backstage's default), which leaves
+  // the page blank. The shipped policy must switch that directive off.
+  if (get(csp, 'upgrade-insecure-requests') !== false) {
+    add(
+      'csp-no-upgrade',
+      'backend.csp must set upgrade-insecure-requests: false, or Safari cannot load the app from a local http address.',
     );
   }
 

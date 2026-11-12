@@ -1,0 +1,63 @@
+{
+  "stage": "nfr-design",
+  "unit": "u2-plugin-backend",
+  "upstream_ids": [
+    "NFR5.1",
+    "NFR5.2",
+    "NFR5.3",
+    "NFR5.4",
+    "NFR5.5",
+    "NFR5.6",
+    "NFR5.7",
+    "NFR5.8",
+    "NFR5.9",
+    "NFR5.10",
+    "NFR1.7"
+  ],
+  "coverage": [
+    {
+      "id": "NFR5.1",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR5.2",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR5.3",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR5.4",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR5.5",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR5.6",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR5.7",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR5.8",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR5.9",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR5.10",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR1.7",
+      "status": "GAP"
+    }
+  ]
+}
