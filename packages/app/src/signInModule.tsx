@@ -9,8 +9,10 @@ import {
 } from '@backstage/frontend-plugin-api';
 import { SignInPageBlueprint } from '@backstage/plugin-app-react';
 import { CatalogA11yFix } from './a11y/CatalogA11yFix';
+import { CatalogTableLayout } from './layout/CatalogTableLayout';
 import { SignInPage, type SignInPageProps } from './signin/SignInPage';
 import { createSignInClient } from './signin/signInClient';
+import { darkDefaultThemeApi } from './theme/defaultTheme';
 
 /**
  * The sign-in page with its client built from Backstage's discovery service,
@@ -55,5 +57,10 @@ export const signInModule = createFrontendModule({
       name: 'catalog-a11y-fix',
       params: { element: <CatalogA11yFix /> },
     }),
+    AppRootElementBlueprint.make({
+      name: 'catalog-table-layout',
+      params: { element: <CatalogTableLayout /> },
+    }),
+    darkDefaultThemeApi,
   ],
 });

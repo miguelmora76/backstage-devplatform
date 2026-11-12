@@ -6,7 +6,9 @@
 @backstage/plugin-app
 @backstage/plugin-app-react
 @backstage/plugin-catalog
+@backstage/plugin-user-settings
 @backstage/test-utils
+@backstage/ui
 @material-ui/core
 @testing-library/dom
 @testing-library/jest-dom

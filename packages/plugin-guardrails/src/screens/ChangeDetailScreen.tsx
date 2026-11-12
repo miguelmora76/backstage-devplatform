@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import Button from '@material-ui/core/Button';
+import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import type { Failure } from '../api/failures';
 import type { Change } from '../api/types';
@@ -215,7 +216,7 @@ export function ChangeDetailScreen({
       />
       <main style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {alert && <RefusalAlert messageKey={alert} onDismiss={dismissAlert} />}
-        {body}
+        <Paper style={{ padding: 16 }}>{body}</Paper>
       </main>
     </div>
   );

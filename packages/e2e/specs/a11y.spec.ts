@@ -2,7 +2,12 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { waitForHealthyStack } from './support/healthy';
-import { prepareChanges, views, type Prepared } from './support/screens';
+import {
+  prepareChanges,
+  settingsView,
+  views,
+  type Prepared,
+} from './support/screens';
 
 // NFR3.1: every screen passes an accessibility scan at WCAG 2.1 AA, including
 // colour contrast, in Chrome and Firefox. Any violation fails; rules the scan
@@ -29,47 +34,63 @@ test.afterAll(({}, info) => {
   );
 });
 
-for (const name of [
-  'sign-in choices',
-  'catalog list',
-  'service overview',
-  'changes list',
-  'change detail',
-  'audit log',
-]) {
-  test(`${name} has no WCAG 2.1 AA violation`, async ({ page }, info) => {
-    const view = views(state.prepared!).find(v => v.name === name)!;
-    await view.show(page);
-    let results;
-    try {
-      results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
-    } catch (error) {
-      // Known environment issue: the Playwright Firefox build used here
-      // (1.65.0, macOS arm64) crashes the page inside axe's nested-interactive
-      // rule on the service overview, changes list and audit log. Not verified
-      // on Linux CI. Only this exact crash in Firefox is skipped (and
-      // annotated); a violation, or the same crash in Chrome, still fails.
-      if (
-        info.project.name === 'firefox' &&
-        /Page crashed/.test(String(error))
-      ) {
-        info.annotations.push({
-          type: 'known-environment-issue',
-          description: 'Firefox page crash inside axe (unverified on Linux CI)',
-        });
-        test.skip(
-          true,
-          'Known environment issue: Firefox page crash inside axe',
-        );
+// NFR1: the scan runs on every view in the dark and in the light theme.
+// Backstage keeps the chosen theme under the key "theme"; the browser starts
+// with it set, as a visitor who had chosen it would.
+const THEMES = ['dark', 'light'] as const;
+
+for (const theme of THEMES)
+  for (const name of [
+    'sign-in choices',
+    'catalog list',
+    'service overview',
+    'changes list',
+    'change detail',
+    'audit log',
+    'settings',
+  ]) {
+    test(`${name} has no WCAG 2.1 AA violation in the ${theme} theme`, async ({
+      page,
+    }, info) => {
+      await page.addInitScript(mode => {
+        window.localStorage.setItem('theme', mode);
+      }, theme);
+      const view = [...views(state.prepared!), settingsView].find(
+        v => v.name === name,
+      )!;
+      await view.show(page);
+      let results;
+      try {
+        results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+      } catch (error) {
+        // Known environment issue: the Playwright Firefox build used here
+        // (1.65.0, macOS arm64) crashes the page inside axe's nested-interactive
+        // rule on the service overview, changes list and audit log. Not verified
+        // on Linux CI. Only this exact crash in Firefox is skipped (and
+        // annotated); a violation, or the same crash in Chrome, still fails.
+        if (
+          info.project.name === 'firefox' &&
+          /Page crashed/.test(String(error))
+        ) {
+          info.annotations.push({
+            type: 'known-environment-issue',
+            description:
+              'Firefox page crash inside axe (unverified on Linux CI)',
+          });
+          test.skip(
+            true,
+            'Known environment issue: Firefox page crash inside axe',
+          );
+        }
+        throw error;
       }
-      throw error;
-    }
-    incomplete[name] = results.incomplete.map(i => i.id);
-    const summary = results.violations.map(v => ({
-      rule: v.id,
-      impact: v.impact,
-      nodes: v.nodes.slice(0, 3).map(n => n.target.join(' ')),
-    }));
-    expect(summary).toEqual([]);
-  });
-}
+      incomplete[`${name} (${theme})`] = results.incomplete.map(i => i.id);
+      const summary = results.violations.map(v => ({
+        rule: v.id,
+        impact: v.impact,
+        nodes: v.nodes.slice(0, 3).map(n => n.target.join(' ')),
+        why: v.nodes.slice(0, 1).flatMap(n => n.any.map(a => a.message)),
+      }));
+      expect(summary).toEqual([]);
+    });
+  }

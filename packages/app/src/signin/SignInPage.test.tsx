@@ -5,6 +5,7 @@ import { axe } from 'jest-axe';
 import { SignInPage } from './SignInPage';
 import type { ListResult, SignInClient, StartAnswer } from './signInClient';
 import type { DemoUser } from './signInState';
+import { roleLabel } from './strings';
 
 const users: DemoUser[] = [
   { userId: 'sam', name: 'Sam', role: 'service-owner' },
@@ -298,5 +299,49 @@ describe('SignInPage', () => {
     expect(document.body.textContent).not.toContain('fake-token-sam');
     expect(JSON.stringify(logs.mock.calls)).not.toContain('fake-token-sam');
     expect(JSON.stringify(errors.mock.calls)).not.toContain('fake-token-sam');
+  });
+});
+
+describe('SignInPage layout (FR3.2, FR4.1, FR4.2)', () => {
+  it('puts the three users in one centred container of limited width, each name and role next to its button (FR3.2)', async () => {
+    setup(makeClient());
+    await screen.findByRole('button', { name: 'Sign in as Sam' });
+
+    const container = screen.getByTestId('sign-in-container');
+    const style = window.getComputedStyle(container);
+    expect(style.maxWidth).toMatch(/^\d+(\.\d+)?px$/);
+    expect(style.marginLeft).toBe('auto');
+    expect(style.marginRight).toBe('auto');
+    expect(container).toContainElement(
+      screen.getByRole('list', { name: 'Choose a demo user' }),
+    );
+
+    const rows = within(container).getAllByRole('listitem');
+    expect(rows).toHaveLength(3);
+    for (const [index, user] of users.entries()) {
+      const row = within(rows[index]);
+      expect(row.getByText(user.name)).toBeInTheDocument();
+      expect(row.getByText(roleLabel(user.role))).toBeInTheDocument();
+      expect(
+        row.getByRole('button', { name: `Sign in as ${user.name}` }),
+      ).toBeInTheDocument();
+    }
+  });
+
+  it('keeps every text and test hook as it was (FR4.1, FR4.2)', async () => {
+    setup(makeClient());
+    await screen.findByRole('button', { name: 'Sign in as Sam' });
+    expect(screen.getByTestId('sign-in-page')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Choose a demo user' }),
+    ).toBeInTheDocument();
+    for (const user of users) {
+      expect(
+        screen.getByTestId(`sign-in-choose-${user.userId}`),
+      ).toHaveAccessibleName(`Sign in as ${user.name}`);
+      expect(
+        screen.getByTestId(`sign-in-choose-${user.userId}`),
+      ).toHaveTextContent('Sign in');
+    }
   });
 });

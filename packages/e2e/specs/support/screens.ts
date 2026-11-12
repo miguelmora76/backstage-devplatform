@@ -50,6 +50,34 @@ export interface View {
   show(page: Page): Promise<void>;
 }
 
+/**
+ * The settings page with the light/dark choice (revision 1). It is checked by
+ * the accessibility and layout specs next to the six views, but it is kept out
+ * of `views` so the timing check keeps measuring the six views it always did.
+ */
+export const settingsView: View = {
+  name: 'settings',
+  async show(page) {
+    await openSignIn(page, '/catalog');
+    await signInButton(page, 'sam').click();
+    await expect(
+      page.getByRole('link', { name: 'checkout-bridge' }),
+    ).toBeVisible();
+    await page.getByRole('link', { name: 'Settings' }).first().click();
+    await expect(page.getByRole('button', { name: /Light/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Dark/ })).toBeVisible();
+    // The app repairs tab pointers after the page renders (a11y/catalogA11y);
+    // wait for the repaired state so the scan never sees the unrepaired one.
+    await page.waitForFunction(() =>
+      Array.from(
+        document.querySelectorAll('[role="tab"][aria-controls]'),
+      ).every(tab =>
+        document.getElementById(tab.getAttribute('aria-controls') ?? ''),
+      ),
+    );
+  },
+};
+
 export function views({ service, changeId }: Prepared): View[] {
   const run = seededFailedRuns(service)[0];
   const overview = async (page: Page) => {

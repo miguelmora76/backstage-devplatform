@@ -1,13 +1,39 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
 import type { IdentityApi } from '@backstage/frontend-plugin-api';
 import Button from '@material-ui/core/Button';
+import Container from '@material-ui/core/Container';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
+import Paper from '@material-ui/core/Paper';
+import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import { createIdentityHolder } from './identityHolder';
 import { createRequestGuard, type SignInClient } from './signInClient';
 import { initialSignInState, reduceSignIn, type DemoUser } from './signInState';
 import { roleLabel, signInStrings } from './strings';
+
+// Every colour and space comes from the active theme (dark by default), so
+// the page matches the rest of the app in both themes (FR1.2, FR2.2).
+const useStyles = makeStyles(theme => ({
+  page: {
+    minHeight: '100vh',
+    boxSizing: 'border-box',
+    padding: theme.spacing(8, 2),
+    backgroundColor: theme.palette.background.default,
+    color: theme.palette.text.primary,
+  },
+  container: {
+    maxWidth: 640,
+    padding: 0,
+  },
+  users: {
+    padding: 0,
+  },
+  userText: {
+    flex: 1,
+    minWidth: 0,
+  },
+}));
 
 export interface SignInPageProps {
   client: SignInClient;
@@ -68,16 +94,24 @@ export function SignInPage({ client, onSignInSuccess }: SignInPageProps) {
     });
   }
 
+  const classes = useStyles();
+
   return (
-    <main data-testid="sign-in-page">
-      <Typography variant="h1" component="h1" gutterBottom>
-        {signInStrings.title}
-      </Typography>
-      <Body
-        state={state}
-        onChoose={choose}
-        onRetry={() => dispatch({ type: 'retry' })}
-      />
+    <main className={classes.page} data-testid="sign-in-page">
+      <Container
+        maxWidth={false}
+        className={classes.container}
+        data-testid="sign-in-container"
+      >
+        <Typography variant="h3" component="h1" gutterBottom>
+          {signInStrings.title}
+        </Typography>
+        <Body
+          state={state}
+          onChoose={choose}
+          onRetry={() => dispatch({ type: 'retry' })}
+        />
+      </Container>
     </main>
   );
 }
@@ -146,39 +180,42 @@ function UserList(props: {
   workingUserId: string | undefined;
   onChoose(userId: string): void;
 }) {
+  const classes = useStyles();
   const busy = props.workingUserId !== undefined;
   return (
-    <List aria-label={signInStrings.title}>
-      {props.users.map(user => (
-        <ListItem key={user.userId} divider>
-          <div style={{ flex: 1 }}>
-            <Typography component="span" variant="subtitle1">
-              {user.name}
-            </Typography>
-            <Typography
-              component="span"
-              display="block"
+    <Paper>
+      <List aria-label={signInStrings.title} className={classes.users}>
+        {props.users.map(user => (
+          <ListItem key={user.userId} divider>
+            <div className={classes.userText}>
+              <Typography component="span" variant="subtitle1">
+                {user.name}
+              </Typography>
+              <Typography
+                component="span"
+                display="block"
+                color="textSecondary"
+                id={`sign-in-role-${user.userId}`}
+              >
+                {roleLabel(user.role)}
+              </Typography>
+            </div>
+            <Button
+              variant="outlined"
               color="inherit"
-              id={`sign-in-role-${user.userId}`}
+              disabled={busy}
+              aria-label={signInStrings.choose(user.name)}
+              aria-describedby={`sign-in-role-${user.userId}`}
+              onClick={() => props.onChoose(user.userId)}
+              data-testid={`sign-in-choose-${user.userId}`}
             >
-              {roleLabel(user.role)}
-            </Typography>
-          </div>
-          <Button
-            variant="outlined"
-            color="inherit"
-            disabled={busy}
-            aria-label={signInStrings.choose(user.name)}
-            aria-describedby={`sign-in-role-${user.userId}`}
-            onClick={() => props.onChoose(user.userId)}
-            data-testid={`sign-in-choose-${user.userId}`}
-          >
-            {props.workingUserId === user.userId
-              ? signInStrings.working
-              : signInStrings.action}
-          </Button>
-        </ListItem>
-      ))}
-    </List>
+              {props.workingUserId === user.userId
+                ? signInStrings.working
+                : signInStrings.action}
+            </Button>
+          </ListItem>
+        ))}
+      </List>
+    </Paper>
   );
 }
