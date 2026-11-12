@@ -28,6 +28,22 @@ function renderTables() {
           </tr>
         </tbody>
       </table>
+      <div className="MuiCard-root">
+        <ul>
+          <li className="MuiListItem-container">
+            <div className="MuiMenuItem-root" data-testid="filter-item">
+              Starred
+            </div>
+          </li>
+        </ul>
+      </div>
+      <ul>
+        <li className="MuiListItem-container">
+          <div className="MuiMenuItem-root" data-testid="other-menu-item">
+            Other menu
+          </div>
+        </li>
+      </ul>
     </>,
   );
 }
@@ -58,6 +74,16 @@ describe('CatalogTableLayout (FR3.1)', () => {
   it('leaves the tables of the Guardrails plugin as they are', () => {
     renderTables();
     expect(style('plugin-cell').paddingLeft).not.toBe('4px');
+  });
+
+  it('leaves room for the whole "Starred" label in the catalog filter list', () => {
+    renderTables();
+    expect(style('filter-item').paddingRight).toBe('32px');
+  });
+
+  it('leaves menu items outside a card as they are', () => {
+    renderTables();
+    expect(style('other-menu-item').paddingRight).not.toBe('32px');
   });
 
   it('renders nothing visible', () => {

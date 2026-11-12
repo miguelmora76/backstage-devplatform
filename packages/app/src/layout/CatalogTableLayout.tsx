@@ -18,6 +18,12 @@ const useStyles = makeStyles({
       wordBreak: 'normal',
       overflowWrap: 'normal',
     },
+    // The filter list beside the catalog ("Owned", "Starred", "All") keeps
+    // 48px free on the right for a count, which left "Starred" one pixel too
+    // narrow, so its last letter was cut off. 32px is enough for a count.
+    '.MuiCard-root .MuiListItem-container > .MuiMenuItem-root': {
+      paddingRight: 32,
+    },
   },
 });
 
