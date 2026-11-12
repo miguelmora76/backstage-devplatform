@@ -115,6 +115,18 @@ describe('checkShippedSettings', () => {
     expect(rules(star)).toContain('content-policy');
   });
 
+  it('fails when the content policy still upgrades http requests, which leaves Safari blank on http://localhost', () => {
+    const upgrading = shipped();
+    upgrading.appConfig = upgrading.appConfig.replace(
+      /^ {4}upgrade-insecure-requests: false\n/m,
+      '',
+    );
+    expect(upgrading.appConfig).not.toContain('upgrade-insecure-requests');
+    expect(rules(upgrading)).toContain('csp-no-upgrade');
+    expect(rules(shipped())).not.toContain('csp-no-upgrade');
+    expect(rules(shipped())).not.toContain('content-policy');
+  });
+
   it('checks .env.example: core names present, switch false, no password, PostgreSQL only as comments', () => {
     const missing = shipped();
     missing.envExample = missing.envExample.replace(/^BACKEND_PORT=.*$/m, '');
