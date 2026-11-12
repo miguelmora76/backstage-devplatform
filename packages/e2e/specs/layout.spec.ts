@@ -101,11 +101,20 @@ for (const width of WIDTHS) {
           el =>
             `${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]} ${el.scrollWidth}>${el.clientWidth}`,
         );
-      return { names: links.length, broken, scrolling };
+      // The filter list ("Owned", "Starred", "All") shows every label whole.
+      const clipped = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          '.MuiListItem-container .MuiListItemText-root',
+        ),
+      )
+        .filter(el => el.scrollWidth > el.clientWidth)
+        .map(el => el.textContent);
+      return { names: links.length, broken, scrolling, clipped };
     });
     expect(result.names).toBeGreaterThanOrEqual(6);
     expect(result.broken).toEqual([]);
     expect(result.scrolling).toEqual([]);
+    expect(result.clipped).toEqual([]);
   });
 }
 
