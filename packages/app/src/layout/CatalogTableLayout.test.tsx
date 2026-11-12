@@ -50,6 +50,11 @@ describe('CatalogTableLayout (FR3.1)', () => {
     expect(style('catalog-cell').overflowWrap).toBe('normal');
   });
 
+  it('uses a denser table font so the table also fits where fonts are wider (Linux)', () => {
+    renderTables();
+    expect(style('catalog-cell').fontSize).toBe('0.8125rem');
+  });
+
   it('leaves the tables of the Guardrails plugin as they are', () => {
     renderTables();
     expect(style('plugin-cell').paddingLeft).not.toBe('4px');
