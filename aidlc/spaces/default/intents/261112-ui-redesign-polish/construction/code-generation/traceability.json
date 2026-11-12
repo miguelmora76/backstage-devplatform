@@ -1,0 +1,42 @@
+{
+  "stage": "code-generation",
+  "upstream_ids": [
+    "FR1.1",
+    "FR1.2",
+    "FR1.3",
+    "FR2.1",
+    "FR2.2",
+    "FR2.3",
+    "FR2.4",
+    "FR3.1",
+    "FR3.2",
+    "FR4.1",
+    "FR4.2",
+    "FR4.3",
+    "FR5.1",
+    "NFR1",
+    "NFR2",
+    "NFR3",
+    "NFR4",
+    "NFR5"
+  ],
+  "coverage": [
+    { "id": "FR1.1", "status": "OK", "target": "packages/app/src/index.tsx" },
+    { "id": "FR1.2", "status": "OK", "target": "packages/e2e/specs/layout.spec.ts" },
+    { "id": "FR1.3", "status": "OK", "target": "packages/app/package.json" },
+    { "id": "FR2.1", "status": "OK", "target": "packages/app/src/theme/defaultTheme.test.tsx" },
+    { "id": "FR2.2", "status": "OK", "target": "packages/app/src/theme/themeSwitch.test.tsx" },
+    { "id": "FR2.3", "status": "OK", "target": "packages/plugin-guardrails/src/components/StatusLabel.test.tsx" },
+    { "id": "FR2.4", "status": "OK", "target": "packages/plugin-guardrails/src/components/readableColour.ts" },
+    { "id": "FR3.1", "status": "OK", "target": "packages/app/src/layout/CatalogTableLayout.tsx" },
+    { "id": "FR3.2", "status": "OK", "target": "packages/app/src/signin/SignInPage.test.tsx" },
+    { "id": "FR4.1", "status": "OK", "target": "packages/app/src/signin/SignInPage.test.tsx" },
+    { "id": "FR4.2", "status": "OK", "target": "packages/app/src/signin/SignInPage.test.tsx" },
+    { "id": "FR4.3", "status": "OK", "target": "packages/app/src/wiring.test.tsx" },    { "id": "FR5.1", "status": "Deferred", "target": "Checked by hand by the person in Safari on macOS (README.md, section Look and theme); no automated Safari check by design (Q4 = A)" },
+    { "id": "NFR1", "status": "OK", "target": "packages/e2e/specs/a11y.spec.ts" },
+    { "id": "NFR2", "status": "OK", "target": "packages/plugin-guardrails/src/screens/layout.test.tsx" },
+    { "id": "NFR3", "status": "OK", "target": "packages/app/src/index.tsx" },
+    { "id": "NFR4", "status": "OK", "target": "packages/e2e/specs/timing.spec.ts" },
+    { "id": "NFR5", "status": "OK", "target": "packages/e2e/specs/layout.spec.ts" }
+  ]
+}
