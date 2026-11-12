@@ -1,0 +1,43 @@
+{
+  "stage": "nfr-requirements",
+  "unit": "u2-plugin-backend",
+  "upstream_ids": [
+    "NFR1",
+    "NFR2",
+    "NFR3",
+    "NFR4",
+    "NFR5",
+    "NFR6",
+    "NFR7"
+  ],
+  "coverage": [
+    {
+      "id": "NFR1",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR2",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR3",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR4",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR5",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR6",
+      "status": "GAP"
+    },
+    {
+      "id": "NFR7",
+      "status": "GAP"
+    }
+  ]
+}
