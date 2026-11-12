@@ -22,22 +22,32 @@ Everything runs on invented data and locally (docker compose, with minikube as a
 - [Look and theme](#look-and-theme)
 - [Known limits](#known-limits)
 - [Troubleshooting](#troubleshooting)
-- [Status of the units](#status-of-the-units)
+- [Status of the project](#status-of-the-project)
+- [Built with AI-DLC](#built-with-ai-dlc)
 
 ## What is in the project
 
 The project is built from six units of work. Each unit has its own design record under `aidlc/` and its own tests.
 
-| Unit | Package or folder                               | What it is                                                                                                      |
-| ---- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| u1   | `packages/guardrails-server`                    | A synthetic MCP server with four tools, and the seeded generator that feeds it                                  |
-| u2   | `packages/plugin-guardrails-backend`            | The Backstage backend plugin: change workflow, approvals, append-only audit log, demo sign-in provider          |
-| u3   | `packages/plugin-guardrails`                    | The Backstage frontend plugin: overview card, Guardrails tab, change detail, demo-user switch                   |
-| u4   | `packages/app`, `packages/backend`              | The host Backstage app: loads both plugins, the demo sign-in page, the catalog of the seeded services, settings |
-| u5   | compose files and the CI workflow (in progress) | Runs the whole sample with docker compose, the real-browser checks and the shared CI workflow                   |
-| u6   | `k8s/` and the minikube scripts                 | Runs the sample on a local minikube cluster, with the same end-to-end check as compose                          |
+| Unit | Package or folder                                  | What it is                                                                                                      |
+| ---- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| u1   | `packages/guardrails-server`                       | A synthetic MCP server with four tools, and the seeded generator that feeds it                                  |
+| u2   | `packages/plugin-guardrails-backend`               | The Backstage backend plugin: change workflow, approvals, append-only audit log, demo sign-in provider          |
+| u3   | `packages/plugin-guardrails`                       | The Backstage frontend plugin: overview card, Guardrails tab, change detail, demo-user switch                   |
+| u4   | `packages/app`, `packages/backend`                 | The host Backstage app: loads both plugins, the demo sign-in page, the catalog of the seeded services, settings |
+| u5   | `compose.yaml`, `packages/e2e` and the CI workflow | Runs the whole sample with docker compose, the real-browser checks and the shared CI workflow                   |
+| u6   | `k8s/` and the minikube scripts                    | Runs the sample on a local minikube cluster, with the same end-to-end check as compose                          |
 
-This README was started in u4, the first unit where the whole application runs. It is kept in step with the code: a unit that changes how the project is run updates it in the same change.
+Work after the six units, each a short pull request into `main`:
+
+| Change | What it did                                                                                                                                       |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| u7     | Turned off the content policy's `upgrade-insecure-requests` so Safari loads the app over `http://localhost` (see [Known limits](#known-limits))   |
+| u8     | The UI redesign: Backstage's stylesheet, dark by default, a visible light/dark switch, no clipped layouts (see [Look and theme](#look-and-theme)) |
+| u9     | Workflow records for the redesign (no application code)                                                                                           |
+| u10    | Shows the whole "Starred" label in the catalog filter list                                                                                        |
+
+This README was started in u4, the first unit where the whole application runs. It is kept in step with the code: a change that alters how the project is run, looks or is checked updates it in the same pull request.
 
 ## How the parts fit together
 
@@ -127,6 +137,7 @@ A missing `GUARDRAILS_SERVER_URL` stops the backend at start-up with a message t
 
 - The backend accepts browser calls only from the app's own address (`APP_BASE_URL`): one origin, no wildcard.
 - A content policy (`backend.csp`) allows scripts, styles and connections only from the app and the backend's own addresses, with no wildcard host. **`unsafe-eval` is allowed for scripts only**, because Backstage's own entity page fails with an `EvalError` without it (found in a real browser run). This is a known, recorded deviation from a stricter design; see [Known limits](#known-limits).
+- **`upgrade-insecure-requests` is switched off** (`backend.csp.upgrade-insecure-requests: false`). Backstage's default policy includes it, and Safari then loads `http://localhost` assets over `https`, which gives a blank page. Nothing is hosted over TLS here, so the directive has no use; the shipped-settings check (`csp-no-upgrade`) fails if it comes back. Turn it on again when the app is served over HTTPS.
 
 ## Run modes
 
@@ -196,7 +207,19 @@ Not covered by these tests (checked by unit u5 in a real browser and with compos
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` is one shared workflow. It runs on every pull request and every push to `main`; nothing is deployed or published, and no secret is used. Jobs added for the app (u4):
+`.github/workflows/ci.yml` is one shared workflow. It runs on every pull request and every push to `main`; nothing is deployed or published, and no secret is used. It has 28 jobs, grouped by what they check:
+
+| Group                   | Jobs                                                                                                                  |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Whole repository        | `format`, `lint`, `typecheck`, `test`                                                                                 |
+| Guardrails server       | `repeatability`, `contract`, `image`                                                                                  |
+| Backend plugin          | `plugin-unit`, `plugin-rules`, `plugin-coverage`, `plugin-contract`, `plugin-build`                                   |
+| Frontend plugin         | `ui-unit`, `ui-coverage`, `ui-contract`, `ui-build`, `ui-checks`                                                      |
+| App and backend         | `app-unit`, `app-coverage`, `app-startup`, `app-catalog`, `app-checks`, `app-build`, `app-image` (details below)      |
+| Real browsers and stack | `e2e-unit`, `compose-e2e` (Chrome and Firefox against the compose stack), `minikube-e2e` (the same specs on minikube) |
+| Gate                    | `ci-ok`: needs every other job and is the one required status                                                         |
+
+Jobs added for the app (u4):
 
 | Job            | What it does                                                                                                                  |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
@@ -219,7 +242,10 @@ packages/
   app/                          u4  frontend app
     src/signin/                     sign-in page, state, client, identity holder
     src/signInModule.tsx            puts the sign-in page and the root redirect into the app
-    src/features.ts                 the list of frontend features (catalog, sign-in, guardrails)
+    src/features.ts                 the list of frontend features (catalog, sign-in, guardrails, user settings)
+    src/theme/                      dark default theme
+    src/layout/                     catalog table width and filter list fit
+    src/a11y/                       accessibility repair of the catalog table
     allowed-packages.txt            the packages the app may depend on
   backend/                      u4  backend
     app-config.yaml                 shipped settings (SQLite in memory)
@@ -231,8 +257,10 @@ packages/
     src/startup.test.ts             the start-up test
     scripts/                        check-packages, check-exit, start-local
     allowed-packages.txt            the packages the backend may depend on
+  e2e/                          u5  real-browser specs (Playwright), compose and minikube scripts
 k8s/                            u6  Kustomize base of the minikube run (one file per concern)
 .env.example                    names and safe local values for the settings
+compose.yaml                    u5  the compose run
 .github/workflows/ci.yml        the shared CI workflow
 aidlc/                          the design record of every unit (requirements, designs, reviews)
 ```
@@ -253,6 +281,7 @@ The full text is in `aidlc/spaces/default/intents/261106-backstage-guardrails-pl
 - **One stylesheet for Backstage's page shell.** The header, navigation and tabs of the host app are built from Backstage UI components. Their styles come from `@backstage/ui/css/styles.css`, which `packages/app/src/index.tsx` imports. `@backstage/ui` is a direct dependency of the app (and is in `packages/app/allowed-packages.txt`). The file is served from the app's own address, so the content policy needs no new allowance.
 - **Dark by default, with a visible switch.** A first-time visitor sees the dark theme. After signing in, the **Settings** link in the sidebar opens Backstage's settings page (the `@backstage/plugin-user-settings` plugin, the app's fourth feature next to the catalog, the sign-in module and the Guardrails plugin). Its **Theme** control offers Auto, Light and Dark, and works with the mouse and the keyboard (Tab to a choice, then Enter or Space). Backstage stores the choice itself under the key `theme`, and a choice made earlier wins over the default. The default is set in `packages/app/src/theme/defaultTheme.ts`, which the sign-in module carries; that code reads and writes no browser storage itself.
 - **Catalog list width.** The cells of Backstage's catalog table (the table the app names "Catalog entries") get 4 pixels of sideways padding instead of 16 to 20 (`packages/app/src/layout/CatalogTableLayout.tsx`), so the list fits at 1024 and 1308 pixels without its own scrollbar and names are never broken inside a word.
+- **Catalog filter list.** The Owned, Starred and All list keeps 32 pixels free on the right of each item (Backstage reserves 48), so the whole word "Starred" shows (`CatalogTableLayout.tsx`; the layout spec checks that no label in the list is clipped).
 - **The Guardrails plugin takes its colours from the theme.** `StatusLabel` and `ShieldMark` start from the theme's status and primary colours and move them only as far as needed to read at contrast (5:1 for status text, 3:1 for the shield). No fixed colour is left in the plugin. Every status still shows a word and an icon, never colour alone.
 - **Layout.** The sign-in page shows the three users in one centred container of limited width. The Guardrails view's two-column grid shrinks to one column in a narrow window instead of pushing past the right edge.
 - **Checks.** `yarn workspace e2e playwright test --project chrome --project firefox --no-deps layout a11y` (with the compose stack running) checks that none of the six views scrolls sideways or clips at 1024, 1308 and 1440 pixels, and runs the accessibility scan on all six views in both themes.
@@ -266,24 +295,44 @@ The full text is in `aidlc/spaces/default/intents/261106-backstage-guardrails-pl
 - **Data is lost on restart** with the in-memory database (plain local runs). Compose uses PostgreSQL with a volume.
 - **The look is Backstage's own.** The app uses Backstage's stock light and dark themes with its accent and status colours; there is no custom brand colour or logo, and nothing below 1024 pixels wide is laid out for phones or tablets. Safari is checked by hand only.
 - **The catalog matches one seed.** See [The catalog and the seed](#the-catalog-and-the-seed).
+- **Firefox accessibility coverage.** Five of the fourteen Firefox accessibility screens are skipped by an existing Firefox page-crash workaround (dark theme: service overview, changes list, audit log; light theme: service overview, audit log), on macOS and in CI. Chrome runs all fourteen.
+- **Safari has no automated check.** It was checked by hand for the redesign.
+- **`flows.spec.ts` needs a fresh database.** Run `yarn compose:reset` and `yarn compose:up` before the end-to-end specs; CI starts from a reset.
 - **Local only.** No hosted environment, no TLS, no managed database. The settings are written so hosting later changes settings, not code.
 
 ## Troubleshooting
 
-| Symptom                                                 | Likely cause and fix                                                                                               |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| The backend stops at start with `guardrails.server.url` | `GUARDRAILS_SERVER_URL` is not set. Copy `.env.example` to `.env` or export it                                     |
-| The sign-in page says the demo sign-in is off           | `GUARDRAILS_DEMO_SIGN_IN` is not `true`. Use `yarn start:local --demo`, or set it in `.env`                        |
-| The sign-in page says the users could not be loaded     | The backend is not reachable from the browser, or did not answer in 5 seconds. Use Retry; check `BACKEND_BASE_URL` |
-| `There is no .env file`                                 | Run `cp .env.example .env` at the repository root                                                                  |
-| Service pages say a service is not found                | The guardrails server uses another seed than the committed catalog. See the catalog section                        |
-| Browser calls fail with a CORS error                    | `APP_BASE_URL` does not match the address in the browser's address bar                                             |
-| The Guardrails tab shows the server as unreachable      | The guardrails server is not running or `GUARDRAILS_SERVER_URL` is wrong. The rest of the app keeps working        |
-| `catalog:write` fails to find the generator             | Build it first: `yarn workspace guardrails-server build`                                                           |
+| Symptom                                                 | Likely cause and fix                                                                                                                                         |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| The backend stops at start with `guardrails.server.url` | `GUARDRAILS_SERVER_URL` is not set. Copy `.env.example` to `.env` or export it                                                                               |
+| The sign-in page says the demo sign-in is off           | `GUARDRAILS_DEMO_SIGN_IN` is not `true`. Use `yarn start:local --demo`, or set it in `.env`                                                                  |
+| The sign-in page says the users could not be loaded     | The backend is not reachable from the browser, or did not answer in 5 seconds. Use Retry; check `BACKEND_BASE_URL`                                           |
+| `There is no .env file`                                 | Run `cp .env.example .env` at the repository root                                                                                                            |
+| Service pages say a service is not found                | The guardrails server uses another seed than the committed catalog. See the catalog section                                                                  |
+| Browser calls fail with a CORS error                    | `APP_BASE_URL` does not match the address in the browser's address bar                                                                                       |
+| The Guardrails tab shows the server as unreachable      | The guardrails server is not running or `GUARDRAILS_SERVER_URL` is wrong. The rest of the app keeps working                                                  |
+| Safari shows a blank page at `http://localhost:7007`    | The content policy still has `upgrade-insecure-requests`. It is `false` in `packages/backend/app-config.yaml`; check that no other settings file turns it on |
+| `catalog:write` fails to find the generator             | Build it first: `yarn workspace guardrails-server build`                                                                                                     |
 
-## Status of the units
+## Status of the project
 
-u1, u2 and u3 are built and merged. u4 (this unit) adds the app, the catalog, the settings, the CI jobs and this README. u5 will add the compose files, the real-browser checks and the rest of the CI workflow, and extend this README with the compose run; u6 adds the minikube run (see [Run on minikube](#run-on-minikube)) and one more CI job.
+All six units (u1 to u6) are built and merged, and the follow-up changes u7 to u10 are merged too. The compose run (u5) and the minikube run (u6) are described below. Two AI-DLC workflows are complete, and their records are under `aidlc/`:
+
+- `261106-backstage-guardrails-plu` (mvp): the six units, branch protection on `main`, and the screen-reader pass.
+- `261112-ui-redesign-polish` (express): the UI redesign. Deployment steps were skipped on purpose because nothing is deployed.
+
+Nothing is outstanding. The known limits above are accepted ones.
+
+## Built with AI-DLC
+
+This project was planned, designed, built and tested with **AI-DLC** (AI-Driven Development Life Cycle), a structured workflow for AI-assisted software development, run through Claude Code. AI-DLC takes a piece of work from idea to merged code in ordered stages (requirements, design, code generation, build and test), asks for a person's approval at each gate, and keeps a written record of what was decided and why.
+
+- **Where the record is.** Everything AI-DLC produced is under `aidlc/`: the requirements, designs, code plans, test results and the decision log of each intent (`aidlc/spaces/default/intents/`), the team's practices (`aidlc/spaces/default/memory/`) and the code knowledge base (`aidlc/spaces/default/codekb/`).
+- **Two intents so far.** `261106-backstage-guardrails-plu` (the six units) and `261112-ui-redesign-polish` (the redesign).
+- **Practices it enforced.** Test first, at least 85% line coverage, a short-lived branch and pull request for each piece of work, and a green `ci-ok` before merge.
+- **Reading it.** Start with each intent's `construction/build-and-test/build-and-test-summary.md`: it lists every requirement, how it was verified and what is still a known limit.
+
+The framework itself is a separate project; this repository only holds its record of this sample's work and its `.claude/` workspace shell.
 
 ## Run everything with docker compose
 
@@ -326,11 +375,11 @@ Reports and timing numbers are written to `packages/e2e/dist/out/`. Trace, video
 
 ### Making the CI result block a merge
 
-The workflow ends with one job, `ci-ok`, that needs every other job and fails unless all of them succeeded. A repository setting cannot be committed as code, so set it once in GitHub: **Settings > Branches > branch protection rule for `main` > Require status checks to pass before merging > add `ci-ok`**. Doing it per job would need a settings change for every new job.
+The workflow ends with one job, `ci-ok`, that needs every other job and fails unless all of them succeeded. A repository setting cannot be committed as code, so it is set in GitHub: branch protection on `main` requires the `ci-ok` status, applies to administrators too, and refuses force pushes and deletion. This is already on for this repository (checked with `gh api repos/<owner>/<repo>/branches/main/protection`). To set it on a copy: **Settings > Branches > branch protection rule for `main` > Require status checks to pass before merging > add `ci-ok`**. Doing it per job would need a settings change for every new job.
 
 ### Screen-reader checklist (done by a person, once)
 
-No pipeline can run a screen reader. With VoiceOver and Chrome (macOS), or NVDA and Firefox (Windows), do each of these and note the result in the pull request:
+This was done for the first release (VoiceOver, all five steps passed, recorded in the Build and Test records under `aidlc/`). Repeat it after a change that alters the pages' structure. No pipeline can run a screen reader. With VoiceOver and Chrome (macOS), or NVDA and Firefox (Windows), do each of these and note the result in the pull request:
 
 1. Open the sample, hear the three "Sign in as ..." choices, and sign in as Sam.
 2. Open a service, then its Guardrails tab, and read the upgrade plan table (names, current and recommended versions).
@@ -340,7 +389,7 @@ No pipeline can run a screen reader. With VoiceOver and Chrome (macOS), or NVDA 
 
 ### Browser versions
 
-Chrome is the stable channel installed on the machine or runner and moves on its own; Firefox is the build shipped with the pinned Playwright version (`@playwright/test` 1.65.0, checked on 2026-11-09). Each run prints the versions it used. Raise the pin in a pull request to move Firefox.
+Safari is checked by hand only. Chrome is the stable channel installed on the machine or runner and moves on its own; Firefox is the build shipped with the pinned Playwright version (`@playwright/test` 1.65.0, checked on 2026-11-09). Each run prints the versions it used. Raise the pin in a pull request to move Firefox.
 
 ### Troubleshooting the compose run
 
