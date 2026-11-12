@@ -25,7 +25,11 @@ Counts are the same as the developer's own final run (1,077 tests, 99 suites wit
 
 ## Skipped tests (not passes)
 
-Five Firefox accessibility tests were skipped by the existing, annotated page-crash workaround on macOS arm64: service overview, changes list and audit log in the dark theme, and changes list and audit log in the light theme. Chrome ran every screen in both themes. The developer's earlier run skipped three; the set that crashes varies from run to run. Firefox coverage of those screens rests on the pipeline run on Linux, which has not run for this branch yet.
+Five Firefox accessibility tests were skipped by the existing, annotated page-crash workaround on macOS arm64: service overview, changes list and audit log in the dark theme, and changes list and audit log in the light theme. Chrome ran every screen in both themes. The developer's earlier run skipped three; the set that crashes varies from run to run. The pipeline run on Linux (PR #9, run 43156229015, both `compose-e2e` and `minikube-e2e`) skipped the same five: dark theme service overview, changes list and audit log, and light theme service overview and audit log. So Firefox covers 9 of the 14 screen and theme combinations, and Chrome covers all 14.
+
+## Pipeline run (PR #9)
+
+The first run on the PR (run 43154499577 at `4877f06`) failed: `compose-e2e` and `minikube-e2e` each failed one spec, the catalog list at 1024 px (776 px of table in a 760 px container on Linux, wider fonts than macOS), and `ci-ok` failed with them. The fix (13 px table font, test first, `abd6899`) passed on this machine, and the second run (run 43156229015 at `d37a05b`) passed all 28 jobs including `ci-ok`: `compose-e2e` 99 passed and 5 skipped, `minikube-e2e` 99 passed and 5 skipped.
 
 ## Failures and flakes
 
@@ -37,4 +41,4 @@ The person checked the compose run at `http://localhost:7007` in Safari on 2026-
 
 ## Failure predicate
 
-No build or test command failed, and no applicable target is `Not Met` or `Unverified`. The stage result is successful (see the summary for the one caveat on Firefox).
+No build or test command failed, and no applicable target is `Not Met` or `Unverified`. The stage result is successful, with one limitation named in the summary: five of fourteen Firefox accessibility screens are skipped by a known crash workaround, in the pipeline as well.
